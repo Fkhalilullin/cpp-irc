@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// proverit' pass
 	unsigned int port = std::atoi(argv[1]);
 	std::string pass(argv[2]);
 	IRCServer serv(port, pass);

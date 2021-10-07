@@ -32,6 +32,7 @@
 #include <netdb.h> // proto
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 
 class User;
@@ -47,6 +48,7 @@ public:
     std::string                      _password;
     fd_set                           _client_fds;
     std::map<std::string, User>      _users;
+    std::vector<User>                _unloggedUsers;
     std::map<std::string, User*>     _operators;
     std::map<std::string, Channel>   _channels;
 
@@ -59,6 +61,7 @@ public:
     private:
         std::string _recv( User & user );
         void        _send( Message & msg );
+        void        _exec( Message &msg);
 
 };
 

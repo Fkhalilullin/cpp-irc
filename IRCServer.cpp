@@ -67,58 +67,76 @@ void IRCServer::start() {
 					struct sockaddr_in temp;
 
 					socklen_t socklen = sizeof(struct sockaddr_in); // temp
-					int connect_fd = accept(this->_server_fd, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
+					int new_fd = accept(this->_server_fd, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
+					
+					User new_user;
+					new_user.setSocket(new_fd);
+					_unloggedUsers.push_back(new_user);
+					_users.insert(std::make_pair(std::to_string(new_fd), new_user));
+
 					// if (connect_fd < 0) ...
-					std::cout << "connect fd " << connect_fd << std::endl; // socketi clientov
+					std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
 
 					// std::cout << GRE << "new client!!\n" << END;
-					if (this->_max_fd < connect_fd)
-						this->_max_fd = connect_fd;
-					FD_SET(connect_fd, &this->_client_fds);
-					// main_server.clients.push_back(make_new_client(connect_fd)); // make new user!!
+					if (this->_max_fd < new_fd)
+						this->_max_fd = new_fd;
+					FD_SET(new_fd, &this->_client_fds);
+					// main_server.clients.push_back(make_new_client(new_fd)); // make new user!!
 					// std::cout << GRE << "one more joined\n" << END; // add here id - who - add other ..
 
 					std::string welcomeMsg = "Welcome to our IRC server! \r\n";
-					send(connect_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
+					send(new_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
 				}
 
 				else {
-					// msg handling
-					// easy part ...
 
-					// std::cout << "i inside else: " << i << std::endl;
+					std::cout << "inseide else" << std::endl;
 					char buf[1024]; // buff size
-					memset(buf, '\0', sizeof(buf)); // \0 ??
-					int bytes_in = recv(i, buf, sizeof(buf), 0); // i ??
-					// if (bytes_in < 1) // -> drop the client
-					// { close(i); // is it right for mac?
-					// FD_CLR(i, &main_server.client_fds); }
+					memset(buf, '\0', sizeof(buf));
+					int bytes_in = recv(i, buf, sizeof(buf), 0);
+					
+					if (bytes_in < 1) {
+						close(i);
+						FD_CLR(i, &this->_client_fds);
+					}
+					
+					Message msg;
+					msg._parse(buf);
+
+					// zdes' budet nash UMNIJ RECIEVE //
+
+					std::cout << "posle if" << std::endl;
 					// else 
+					std::cout << "MAP SIZE = " << _users.size() << std::endl;
 
-					// HERE WOULD BE REQUEST OR MSG
 
-					for (int k = 0; k < this->_max_fd; k++) {
+					std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
+					for (; uit != _unloggedUsers.end(); ++uit) {
+						std::cout << "Sended to: " << uit->_socket << " " << buf << std::endl;
+						// send(uit->_socket, buf, bytes_in, 0);
+					}
+
+					// EXEC
+
+
+					//
+					// std::map<std::string, User>::iterator it = _users.begin();
+					// for (; it != _users.end(); ++it)
+					// {
+					// 	send(it->second._socket, buf, bytes_in, 0);
+					// 	std::cout << "Sended to: " << it->second._socket << " " << buf << std::endl;
+					// }
+					//
+					for (int k = 0; k < this->_max_fd + 1; k++) {
+
 						int out_socket = k;
 						if (out_socket != this->_server_fd && out_socket != i) {
 							
-							// std::cout << "chto-to proishodit\n"; // otpravlyet po kol-vo fds in set
-							
-							// send(out_socket, temp, 3, 0);
-							// std::string sstm; 
-							// sstm << name << age;
-							// result = sstm.str()
-							
-							// std::string ss;
-							// ss = "guy in the chat # " + char(i + 48);  // + i
-							// const char *str = ss.c_str();
-							// send(out_socket, str, strlen(str), 0);
+							std::ostringstream ss;
+							ss << "guy in the chat # " << i << ": ";
+							std::string string_to_send = ss.str();
+							send(out_socket, string_to_send.c_str(), string_to_send.size() + 1, 0);
 							send(out_socket, buf, bytes_in, 0);
-
-							// std::ostringstream ss;
-							// ss << "guy in the chat # " << i << ": ";
-							// std::string string_to_send = ss.str();
-							// send(out_socket, string_to_send.c_str(), string_to_send.size() + 1, 0);
-							// send(out_socket, buf, bytes_in, 0);
 						}
 					}
 

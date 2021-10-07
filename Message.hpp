@@ -17,7 +17,7 @@ class Message{
 		const std::string				&_getPrefix() const;
 		const std::string				&_getCommand() const;
 		const std::vector<std::string>	&_getParamets() const;
-
+		
 
 
 };
