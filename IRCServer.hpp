@@ -5,15 +5,34 @@
 
 #include <map>
 #include <string>
+// #include <string.h>
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <exception>
+#include <sys/time.h>
+
 
 #include "User.hpp"
 #include "Channel.hpp"
 #include "Message.hpp"
+
+// clean it
+#include <stdio.h>
+#include <string.h>   //strlen
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>   //close
+#include <arpa/inet.h>	//close
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO
+#include <netdb.h> // proto
+#include <iostream>
+#include <sstream>
+
 
 class User;
 class Channel;
@@ -38,8 +57,8 @@ public:
     // void        stop ();
 
     private:
-        std::string recv( User & user );
-        void        send( Message & msg );
+        std::string _recv( User & user );
+        void        _send( Message & msg );
 
 };
 
