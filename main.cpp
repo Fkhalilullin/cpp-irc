@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
 	IRCServer serv(port, pass);
 	serv.start();
 
-
 	return 0;
 }
 

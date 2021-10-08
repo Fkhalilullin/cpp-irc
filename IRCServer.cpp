@@ -100,8 +100,8 @@ void IRCServer::start() {
 						FD_CLR(i, &this->_client_fds);
 					}
 					
-					Message msg;
-					msg._parse(buf);
+					// Message msg;
+					// msg._parse(buf);
 
 					// zdes' budet nash UMNIJ RECIEVE //
 
