@@ -8,11 +8,11 @@ Message::Message(std::string str) {
     this->_parse(str);
 }
 
-const std::string				&Message::_getCommand() const {
+const std::string				&Message::getCommand() const {
     return this->_command;
 }
 
-const std::vector<std::string>	&Message::_getParamets() const {
+const std::vector<std::string>	&Message::getParamets() const {
     return this->_parameters;
 }
 
@@ -66,7 +66,8 @@ bool Message::_checkComma(const std::string &str) {
 }
 
 void Message::_parseUtility(std::vector<std::string> vec_sep_space) {
-    std::vector<std::string> vec_sep_comma; 
+    std::vector<std::string> vec_sep_comma;
+     
     if (!vec_sep_space.empty()) {
         for (int i = 0; i != vec_sep_space.size(); ++i) {
             if (i == 0)
