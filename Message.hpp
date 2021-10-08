@@ -24,6 +24,7 @@ private:
 	std::vector<std::string>		_split(const std::string &str, char delimeter);
 	bool							_checkColon(const std::string &str);
 	bool							_checkComma(const std::string &str);
+	void							_parseUtility(std::vector<std::string> vec_sep_space);
 	void							_printTest();
 };
 
