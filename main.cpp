@@ -25,17 +25,57 @@
 
 
 
-int main(int argc, char *argv[]) {
+// int main(int argc, char *argv[]) {
+int main() {
 
-	if (argc != 3) {
-		std::cout << RED << "valid params need" << END << std::endl;
-		return 1;
-	}
+	// if (argc != 3) {
+	// 	std::cout << RED << "valid params need" << END << std::endl;
+	// 	return 1;
+	// }
 
-	unsigned int port = std::atoi(argv[1]);
-	std::string pass(argv[2]);
-	IRCServer serv(port, pass);
-	serv.start();
+	// unsigned int port = std::atoi(argv[1]);
+	// std::string pass(argv[2]);
+	// IRCServer serv(port, pass);
+	// serv.start();
+
+	User kek;
+	kek.setNickname("kke132");
+
+	User lol;
+	lol.setNickname("lll132");
+
+	Channel cha("new chanel");
+	cha.addUser(kek);
+	cha.addUser(lol);
+	cha.addChop(kek);
+	// cha.addChop(kek);
+
+	std::cout << std::endl;
+	
+	// cha.removeUser("kke132");
+	cha.channel_info();
+	
+
+	
+	
+	// std::cout << "users" << std::endl;
+
+	// std::map<std::string, User*> us = cha.getUsers();
+	// std::map<std::string, User*>::iterator itus;
+	// itus = us.begin();
+	// for (; itus != us.end(); itus++) {
+	// 	std::cout << itus->first << std::endl;
+	// }
+	
+	// //
+	// std::cout << "chops" << std::endl;
+
+	// std::map<std::string, User*> chps = cha.getChops();
+	// std::map<std::string, User*>::iterator itchop;
+	// itchop = chps.begin();
+	// for (; itchop != chps.end(); itchop++) {
+	// 	std::cout << itchop->first << std::endl;
+	// }
 
 
 	return 0;

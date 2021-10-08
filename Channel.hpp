@@ -2,10 +2,10 @@
 #define CHANNEL_HPP
 
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <map>
 
-#include <utility> // for make pair
 
 #include "User.hpp"
 #define YEL "\033[33m" // make colors in other H file
@@ -13,40 +13,39 @@
 
 class Channel {
 	public: // make private
-		typedef std::map<std::string, User*> userMap; // del it
+		typedef std::map<std::string, User*> userMap;
 		
-		private:
-			Channel();
+	private:
+		Channel();
 
-		public:
-			Channel(std::string ch_name);
-			~Channel();
+	public:
+		Channel(std::string ch_name);
+		~Channel();
 
-		std::string _name; 						// name of channel
-		std::map<std::string, User> _users;		// list of users // CHANGED
-		std::map<std::string, User*> _chops;
+		std::string _name; // ok
+		std::string _topic; //  ok
+		userMap _users; // ok 
+		userMap _chops; // ok
 
 		void addUser(User &_user); // ok
 		void addChop(User &_user); // ok 
-		void removeUser(std::string _nickname); // add him to ban list
+		void removeUser(std::string _nickname); // ok
 
-		const std::map<std::string, User>	&getUsers() const; // ok
-		const std::map<std::string, User*>	&getChops() const; // ok
+		const userMap	&getUsers() const; // ok
+		const userMap	&getChops() const; // ok
 
-		// new funcs //
-		int _limit_users; // ok 
-		std::vector<std::string> _ban_list; // ok 
+		// NEW FUNCS //
+		int _limit_users; // ok // make it const
+		std::vector<std::string> _ban_list; // ok
 		
 		void channel_info(); //ok 
+		void change_topic(std::string new_topic); // ok // gde budet funk?
+		// void change name of channel (channel, new_channel name) // na servere?
 
-		// channel mode // ?? private ili net??
-		// std::sttrig topic of channel 
-		// void change topic // only for operator (Channel, new name)
-		// void change name of channel 				(channel, new_channel name)
+		// channel mode // ?? private ili net?? // dobavit' modi
 
 		// add to server remove channel
-		// add to user -> get username 
-		// username would be universal'nij //
+		// add to user -> get username // -
 
 
 

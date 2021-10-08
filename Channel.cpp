@@ -8,6 +8,8 @@ Channel::Channel(std::string ch_name) {
 
 		this->_name = ch_name;
 		this->_limit_users = 10;
+		this->_topic = "default";
+
 		std::cout << "channel \"" << this->_name <<  "\" created\n"; // del it
 		// 1. nado li ogranicheniie na imya channela #$. and ....
 
@@ -16,7 +18,7 @@ Channel::Channel(std::string ch_name) {
 void Channel::addUser(User &new_user) {
 
 	// if user exists in channel
-	// if (fine in ban list - >new_user._username) {
+	// if (fine in ban list - >new_user._nickname) {
 		// std::cout << "you are banned on channel" << std::endl;
 		// return;
 	// }
@@ -29,7 +31,7 @@ void Channel::addUser(User &new_user) {
 
 	// check if nickname and username in channel already -> msg
 
-	this->_users.insert(std::make_pair(new_user._nickname, new_user));
+	this->_users.insert(std::make_pair(new_user._nickname, &new_user));
 	
 	// send to all users that new user is connected 
 	// add user on chanel - > send him greeting maeesage // rules and other
@@ -51,9 +53,9 @@ void Channel::channel_info() {
 	std::cout << "channel name: " << this->_name << std::endl;
 	
 	std::cout << "list of users: " << std::endl;
-	std::map<std::string, User>::iterator iter = this->_users.begin();
+	std::map<std::string, User*>::iterator iter = this->_users.begin();
 	for (; iter != this->_users.end(); iter++) {
-		std::cout << "nickname: " <<  iter->first << " socket: " << iter->second._socket << std::endl;
+		std::cout << "nickname: " <<  iter->first << " socket: " << iter->second->_socket << std::endl;
 	}
 	
 	// list of chops
@@ -76,7 +78,7 @@ void Channel::channel_info() {
 
 }
 
-const std::map<std::string, User> &Channel::getUsers() const {
+const std::map<std::string, User*> &Channel::getUsers() const {
 	
 	return this->_users;
 }
@@ -86,7 +88,7 @@ const std::map<std::string, User*> &Channel::getChops() const {
 	return this->_chops;
 }
 
-void Channel::removeUser(std::string rem_name) { // add here username //  add User //
+void Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
 
 	this->_ban_list.push_back(rem_name);
 	
@@ -94,5 +96,9 @@ void Channel::removeUser(std::string rem_name) { // add here username //  add Us
 	this->_chops.erase(rem_name); // if he wasnt a chop?
 	std::cout << rem_name << " was banned and added to black list" << std::endl; // add here red color
 
+}
 
+void Channel::change_topic(std::string new_topic) {
+
+	this->_topic = new_topic;
 }
