@@ -11,9 +11,11 @@
 #define YEL "\033[33m" // make colors in other H file
 #define END "\033[37m"
 
+
 class Channel {
 	public: // make private
 		typedef std::map<std::string, User*> userMap;
+
 		
 	private:
 		Channel();
@@ -46,6 +48,7 @@ class Channel {
 
 		// add to server remove channel
 		// add to user -> get username // -
+
 
 
 

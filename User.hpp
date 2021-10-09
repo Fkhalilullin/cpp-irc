@@ -28,7 +28,7 @@ class User {
 			void switchPassword();
 			void switchLogged();
 			void setSocket(int socket);
-
+			int  getSocket() const;
 
 };
 

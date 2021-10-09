@@ -4,6 +4,7 @@ SRCS =  User.cpp main.cpp Channel.cpp IRCServer.cpp Message.cpp
 HEADER = Channel.hpp IRCServer.hpp Message.hpp User.hpp
 
 OBJS = $(SRCS:.cpp=.o)
+
 CLANG = clang++ -g -std=c++98 #-Wall -Werror -Wextra -fsanitize=address
 
 all: $(NAME)

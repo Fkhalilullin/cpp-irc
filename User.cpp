@@ -37,3 +37,8 @@ void User::switchLogged() {
 void User::setSocket(int socket) {
 	_socket = socket;
 }
+
+int  User::getSocket() const
+{
+	return (_socket);
+}
