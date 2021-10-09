@@ -28,11 +28,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO
 #include <netdb.h> // proto
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <ctime>
 
 #define RED "\033[31m"
 #define GRE "\033[32m"
@@ -56,6 +58,7 @@ class IRCServer
         std::vector<User>                _unloggedUsers;
         std::map<std::string, User*>     _operators;
         std::map<std::string, Channel>   _channels;
+        std::string                      _delimeter;
 
 
     explicit IRCServer( unsigned int port, std::string pass );
@@ -67,6 +70,7 @@ class IRCServer
         bool    _recv( int sockfd,       std::string &buf ) const;
         bool    _send( int sockfd, const std::string &buf ) const;
         void    _exec( const Message &msg );
+        void    _removeUser(int sockfd);
 };
 
 #endif
