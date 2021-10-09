@@ -104,9 +104,9 @@ void IRCServer::start() {
                         _removeUser(i);
                     }
 					
-					Message msg(buf);
+					// Message msg(buf);
 					// ECEX(msg)
-					_PRIVMSG(msg, _unloggedUsers[0]);
+					// _PRIVMSG(msg, _unloggedUsers[0]);
 
 
 					// zdes' budet nash UMNIJ RECIEVE //
@@ -115,11 +115,11 @@ void IRCServer::start() {
                               << _users.size() + _unloggedUsers.size() << std::endl;
 
 
-					// std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
-					// for (; uit != _unloggedUsers.end(); ++uit)
-                    // {
-					// 	_send(uit->getSocket(), std::string(buf));
-					// }
+					std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
+					for (; uit != _unloggedUsers.end(); ++uit)
+                    {
+						_send(uit->getSocket(), std::string(buf));
+					}
 				}
 			}
 			i++;
@@ -240,13 +240,6 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	
 	// proverka na valid imeni group budet v sozdanii grouppi !
 	
-	std::map<std::string, Channel>::iterator gr_it;
-	gr_it = this->_channels.begin();
-
-	gr_it = this->_channels.find(msg.getParamets()[0]);
-	if (gr_it != this->_channels.end())
-		return;
-
 	std::map<std::string, User>::iterator us_it;
 	us_it = this->_users.begin();
 
