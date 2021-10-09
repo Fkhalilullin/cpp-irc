@@ -49,7 +49,7 @@ class Channel {
 		// add to server remove channel
 		// add to user -> get username // -
 
-
+		// ПРОВЕРКА ИМеНИ КАНАЛА С СУЩЕСТВУЮЩИМИ ЮЗЕРАМИ
 
 
 

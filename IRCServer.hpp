@@ -71,6 +71,9 @@ public:
         void    _exec( const Message &msg );
         void    _removeUser(int sockfd);
 
+
+        // Begin CMD
+        void    _PRIVMSG(const Message &msg, const User &usr);
 };
 
 #endif

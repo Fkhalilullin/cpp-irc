@@ -104,9 +104,10 @@ void IRCServer::start() {
                         _removeUser(i);
                     }
 					
-					
-//					Message msg;
-//					msg._parse(buf);
+					Message msg(buf);
+					// ECEX(msg)
+					_PRIVMSG(msg, _unloggedUsers[0]);
+
 
 					// zdes' budet nash UMNIJ RECIEVE //
 
@@ -114,11 +115,11 @@ void IRCServer::start() {
                               << _users.size() + _unloggedUsers.size() << std::endl;
 
 
-					std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
-					for (; uit != _unloggedUsers.end(); ++uit)
-                    {
-						_send(uit->getSocket(), std::string(buf));
-					}
+					// std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
+					// for (; uit != _unloggedUsers.end(); ++uit)
+                    // {
+					// 	_send(uit->getSocket(), std::string(buf));
+					// }
 				}
 			}
 			i++;
@@ -228,4 +229,33 @@ void    IRCServer::_removeUser(int sockfd)
         it_u++;
     if (it_u != _unloggedUsers.end())
         _unloggedUsers.erase(it_u);
+}
+
+void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
+	// msg.cmd == PRIVMSG -> budet ran'she
+	
+	// check if client exists ( USR ) // nickname
+	// sam sebe otpravit' miozhet?
+	// send send( int sockfd - komu, const std::string &buf - soobshenie//
+	
+	// proverka na valid imeni group budet v sozdanii grouppi !
+	
+	std::map<std::string, Channel>::iterator gr_it;
+	gr_it = this->_channels.begin();
+
+	gr_it = this->_channels.find(msg.getParamets()[0]);
+	if (gr_it != this->_channels.end())
+		return;
+
+	std::map<std::string, User>::iterator us_it;
+	us_it = this->_users.begin();
+
+	us_it = this->_users.find(msg.getParamets()[0]);
+	std::cout << "YES\n";
+	if (us_it != this->_users.end()) {
+		_send(usr.getSocket(), msg.getParamets().back());
+	}
+	else {
+		_send(usr.getSocket(), "Not work");
+	}
 }
