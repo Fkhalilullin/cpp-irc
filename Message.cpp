@@ -34,7 +34,6 @@ void Message::_parse(std::string str) {
         vec_sep_space = _split(str, ' ');
         _parseUtility(vec_sep_space);
     }
-    this->_printTest();
 }
 
 std::vector<std::string> Message::_split(const std::string &str, char delimeter) {

@@ -54,7 +54,6 @@ class Channel {
 
 
 
-
 };
 
 #endif
