@@ -23,27 +23,7 @@
 #define BLU "\033[34m"
 #define END "\033[37m"
 
-std::vector<std::string> split(const std::string &str, char delimeter)
-{
-    std::vector<std::string> result;
-    std::istringstream sstream(str);
-    std::string tmp;
-    while (std::getline(sstream, tmp, delimeter))
-        result.push_back(tmp);
-    return (result);
-}
-
-
-
 int main(int argc, char *argv[]) {
-
-	auto vec = split(std::string("CMD arg1 arg2"), ' ');
-	for (size_t i = 0; i < vec.size(); i++)
-	{
-		std::cout << vec[i] << std::endl;
-	}
-	return 0;
-	
 	if (argc != 3) {
 		std::cout << RED << "valid params need" << END << std::endl;
 		return 1;
