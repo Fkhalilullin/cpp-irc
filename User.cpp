@@ -42,3 +42,13 @@ int  User::getSocket() const
 {
 	return (_socket);
 }
+
+bool	User::isLogged   () const
+{
+	return (_logged);
+}
+
+bool	User::isPassworded() const
+{
+	return (_password);
+}

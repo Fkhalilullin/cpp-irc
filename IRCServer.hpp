@@ -48,18 +48,18 @@ class Message;
 
 class IRCServer
 {
-    public:
-        int                              _max_fd; // ne bolshe 10
-        int                              _server_fd;
-        unsigned int                     _port;
-        std::string                      _password;
-        fd_set                           _client_fds;
-        std::map<std::string, User>      _users;
-        std::vector<User>                _unloggedUsers;
-        std::map<std::string, User*>     _operators;
-        std::map<std::string, Channel>   _channels;
-        std::string                      _delimeter;
-
+public:
+    int                              _max_fd; // ne bolshe 10
+    int                              _server_fd;
+    unsigned int                     _port;
+    std::string                      _password;
+    fd_set                           _client_fds;
+    std::multimap<std::string, User> _users;
+    std::vector<User>                _unloggedUsers;
+    std::map<std::string, User*>     _operators;
+    std::map<std::string, Channel>   _channels;
+    std::string                      _delimeter;
+    std::string                      _hostname;
 
     explicit IRCServer( unsigned int port, std::string pass );
     ~IRCServer();
@@ -67,10 +67,15 @@ class IRCServer
     // void        stop ();
 
     private:
-        bool    _recv( int sockfd,       std::string &buf ) const;
-        bool    _send( int sockfd, const std::string &buf ) const;
-        void    _exec( const Message &msg );
-        void    _removeUser(int sockfd);
+        bool    _recv      ( int sockfd,       std::string &buf ) const;
+        bool    _send      ( int sockfd, const std::string &buf ) const;
+        void    _exec      ( const Message &msg );
+        void    _removeUser( int sockfd         );
+        std::map<std::string, User>::iterator _getUser   ( int sockfd );
+
+        void    _PASS      ( const Message &msg, User &user );
+        void    _PING      ( const Message &msg, User &user );
+
 };
 
 #endif

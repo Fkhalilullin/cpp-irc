@@ -20,16 +20,17 @@ class User {
 		bool		_logged; // orig nick
 		int			_socket;
 		
-		public:
-			void setNickname(const std::string &nick);
-			void setUsername(const std::string &uname);
-			void setRealName(const std::string &rname);
-			void setServerName(const std::string &sname);
-			void switchPassword();
-			void switchLogged();
-			void setSocket(int socket);
-			int  getSocket() const;
-
+	public:
+		void	setNickname(const std::string &nick);
+		void	setUsername(const std::string &uname);
+		void	setRealName(const std::string &rname);
+		void	setServerName(const std::string &sname);
+		void	switchPassword();
+		void	switchLogged();
+		void	setSocket   (int socket);
+		int		getSocket   () const;
+		bool	isLogged    () const;
+		bool	isPassworded() const;
 
 };
 

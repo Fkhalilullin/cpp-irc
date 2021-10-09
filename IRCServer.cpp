@@ -4,9 +4,11 @@
 IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_port(port),
 	_password(pass),
-    _delimeter("\r\n")    
+    _delimeter("\r\n")
 {
-
+    char    hostname[30];
+    gethostbyname(hostname);
+    _hostname = hostname;
 		// zanulentie fd set 
 
 }
@@ -14,7 +16,6 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
 IRCServer::~IRCServer() {}
 
 void IRCServer::start() {
-
 	struct protoent *protocol;
 	struct sockaddr_in server_adress;
 
@@ -73,9 +74,9 @@ void IRCServer::start() {
 					
 					User new_user;
 					new_user.setSocket(new_fd);
-					_unloggedUsers.push_back(new_user);
-					// _users.insert(std::make_pair(std::to_string(new_fd), new_user));
-
+                    std::pair<std::string, User> myPair(std::string(""),new_user);
+                    _users.insert(myPair);
+					// _unloggedUsers.push_back(new_user);
 					// if (connect_fd < 0) ...
 					std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
 
@@ -85,14 +86,15 @@ void IRCServer::start() {
 					FD_SET(new_fd, &this->_client_fds);
 					// main_server.clients.push_back(make_new_client(new_fd)); // make new user!!
 					// std::cout << GRE << "one more joined\n" << END; // add here id - who - add other ..
-
-					std::string welcomeMsg = "Welcome to our IRC server! \r\n";
-					send(new_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
+                    std::cout << RED << "3" << END << std::endl;
+					// std::string welcomeMsg = "Welcome to our IRC server! \r\n";
+					// send(new_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
 				}
 
 				else {
 
 					std::cout << "inseide else" << std::endl;
+
 					std::string buf;
 
                     try
@@ -105,10 +107,20 @@ void IRCServer::start() {
 						FD_CLR(i, &this->_client_fds);
                         _removeUser(i);
                     }
+
+					Message msg(buf);
+                    std::multimap<std::string, User>::iterator  it;
+                    
+                    it = _users.begin();
+                    while (it != _users.end() && it->second.getSocket() != i)
+                        it++;
+                    if (it != _users.end())
+                    {
+                        _PASS(msg, it->second);
+                        _PING(msg, it->second);
+                    }
+
 					
-					
-//					Message msg;
-//					msg._parse(buf);
 
 					// zdes' budet nash UMNIJ RECIEVE //
 
@@ -116,10 +128,10 @@ void IRCServer::start() {
                               << _users.size() + _unloggedUsers.size() << std::endl;
 
 
-					std::vector<User>::iterator uit = _unloggedUsers.begin(); // 
-					for (; uit != _unloggedUsers.end(); ++uit)
+					it = _users.begin(); // 
+					for (; it != _users.end(); ++it)
                     {
-						_send(uit->getSocket(), std::string(buf));
+						// _send(it->second.getSocket(), std::string(buf));
 					}
 				}
 			}
@@ -216,8 +228,8 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
 
 void    IRCServer::_removeUser(int sockfd)
 {
-    std::map<std::string, User>::iterator   it;
-    std::vector<User>::iterator             it_u;
+    std::multimap<std::string, User>::iterator  it;
+    std::vector<User>::iterator                 it_u;
 
     it = _users.begin();
     while (it != _users.end() && it->second.getSocket() != sockfd)
@@ -230,4 +242,37 @@ void    IRCServer::_removeUser(int sockfd)
         it_u++;
     if (it_u != _unloggedUsers.end())
         _unloggedUsers.erase(it_u);
+}
+
+void    IRCServer::_PASS( const Message &msg, User &user )
+{
+    std::string	buf;
+
+    if (msg.getCommand() != "PASS")
+        return ;
+    std::cout << RED << user.isPassworded() << END << std::endl;
+    if (user.isPassworded())
+    {
+        buf = "462 :You may not reregister";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (msg.getParamets().size() == 0)
+    {
+        buf = "461 PASS :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (msg.getParamets()[0] == _password)
+        user.switchPassword();
+}
+
+void    IRCServer::_PING( const Message &msg, User &user )
+{
+    std::string	buf;
+
+    if (msg.getCommand() != "PING")
+        return ;
+    buf = "PONG " + _hostname;
+    _send(user.getSocket(), buf);
 }
