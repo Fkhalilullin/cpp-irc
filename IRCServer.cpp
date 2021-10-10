@@ -58,84 +58,68 @@ void IRCServer::start() {
 	fd_set select_fds; // just for copy
 	select_fds = this->_client_fds; // take the max id from class
 
-	for (int i; select(this->_max_fd + 1, &select_fds, NULL, NULL, NULL) > -1; ){
+	for (int i; select(this->_max_fd + 1, &select_fds, NULL, NULL, NULL) > -1; )
+    {
 		i = 0;
-		
-		while (i < this->_max_fd + 1) {
-			
-			if (FD_ISSET(i, &select_fds)) {
+		while (i < this->_max_fd + 1)
+        {
+			if (!FD_ISSET(i, &select_fds))
+            {
+                i++;
+                continue ;
+            }
+            if (i == this->_server_fd)
+            {
+                // new client
+                struct sockaddr_in temp;
 
+                socklen_t socklen = sizeof(struct sockaddr_in); // temp
+                int new_fd = accept(this->_server_fd, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
+                
+                _addUser(new_fd);
 
-				// std::cout << RED << "\n" << i << " i inside select fds " << "\n" << END;
+                // if (connect_fd < 0) ...
+                std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
 
-				if (i == this->_server_fd) {
-					// new client
-					struct sockaddr_in temp;
+                if (this->_max_fd < new_fd)
+                    this->_max_fd = new_fd;
+                FD_SET(new_fd, &this->_client_fds);
+                std::cout << RED << "3" << END << std::endl;
+            }
 
-					socklen_t socklen = sizeof(struct sockaddr_in); // temp
-					int new_fd = accept(this->_server_fd, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
-					
-					User new_user;
-					new_user.setSocket(new_fd);
+            else
+            {
+                std::string buf;
 
-                    std::pair<std::string, User> myPair(std::string(""),new_user);
-                    _users.insert(myPair);
+                try
+                {
+                    _recv(i, buf);
+                }
+                catch (const std::exception& e)
+                {
+                    close(i);
+                    FD_CLR(i, &this->_client_fds);
+                    _removeUser(i);
+                }
 
-					// if (connect_fd < 0) ...
-					std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
+                Message msg(buf);
+                std::multimap<std::string, User>::iterator  it;
+                
+                it = _users.begin();
+                while (it != _users.end() && it->second.getSocket() != i)
+                    it++;
+                if (it != _users.end())
+                {
+                    _CAP (msg, it->second);
+                    _PASS(msg, it->second);
+                    _PING(msg, it->second);
+                    _NICK(msg, it->second);
+                    _USER(msg, it->second);
+                    // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
+                }
+                std::cout << "Number of users : " 
+                            << _users.size() + _unloggedUsers.size() << std::endl;
 
-					// std::cout << GRE << "new client!!\n" << END;
-					if (this->_max_fd < new_fd)
-						this->_max_fd = new_fd;
-					FD_SET(new_fd, &this->_client_fds);
-					// main_server.clients.push_back(make_new_client(new_fd)); // make new user!!
-					// std::cout << GRE << "one more joined\n" << END; // add here id - who - add other ..
-                    std::cout << RED << "3" << END << std::endl;
-					// std::string welcomeMsg = "Welcome to our IRC server! \r\n";
-					// send(new_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
-				}
-
-				else {
-
-					std::cout << "inseide else" << std::endl;
-
-					std::string buf;
-
-                    try
-                    {
-                        _recv(i, buf);
-                    }
-                    catch (const std::exception& e)
-                    {
-                        close(i);
-						FD_CLR(i, &this->_client_fds);
-                        _removeUser(i);
-                    }
-
-					Message msg(buf);
-                    std::multimap<std::string, User>::iterator  it;
-                    
-                    it = _users.begin();
-                    while (it != _users.end() && it->second.getSocket() != i)
-                        it++;
-                    if (it != _users.end())
-                    {
-                        _PASS(msg, it->second);
-                        _PING(msg, it->second);
-                    }
-
-					// zdes' budet nash UMNIJ RECIEVE //
-
-                    std::cout << "Number of users : " 
-                              << _users.size() + _unloggedUsers.size() << std::endl;
-
-
-					it = _users.begin(); // 
-					for (; it != _users.end(); ++it)
-                    {
-						// _send(it->second.getSocket(), std::string(buf));
-					}
-				}
 			}
 			i++;
 		}
@@ -191,7 +175,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
     std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
     std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
+    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
     std::cout << GRE << "msg     : " << END << buf << std::endl;
     std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
@@ -222,7 +206,7 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
     std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
     std::cout << YEL << "------------SENDED------------" << END << std::endl;
     std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
     std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
     std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
@@ -231,19 +215,27 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
 void    IRCServer::_removeUser(int sockfd)
 {
     std::multimap<std::string, User>::iterator  it;
-    std::vector<User>::iterator                 it_u;
 
     it = _users.begin();
     while (it != _users.end() && it->second.getSocket() != sockfd)
         it++;
     if (it != _users.end())
         _users.erase(it);
+}
 
-    it_u = _unloggedUsers.begin();
-    while (it_u != _unloggedUsers.end() && it_u->getSocket() != sockfd)
-        it_u++;
-    if (it_u != _unloggedUsers.end())
-        _unloggedUsers.erase(it_u);
+void    IRCServer::_addUser(int sockfd)
+{
+    User new_user;
+
+    new_user.setSocket(sockfd);
+    std::pair<std::string, User> tmp(std::string(""), new_user);
+    _users.insert(tmp);
+}
+
+void    IRCServer::_addUser(const User &user)
+{
+    std::pair<std::string, User> tmp(user.getNickname(), user);
+    _users.insert(tmp);
 }
 
 void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
@@ -268,6 +260,21 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	}
 }
 
+void    IRCServer::_CAP( const Message &msg, User &user )
+{
+    std::string	buf;
+
+    if (msg.getCommand() != "CAP")
+        return ;
+    // std::cout << RED << user.isPassworded() << END << std::endl;
+    buf = "CAP * LS :";
+    _send(user.getSocket(), buf);
+    // buf = "CAP REQ :multi-prefix";
+    // _send(user.getSocket(), buf);
+    // buf = "CAP * ACK multi-prefix";
+    // _send(user.getSocket(), buf);
+}
+
 void    IRCServer::_PASS( const Message &msg, User &user )
 {
     std::string	buf;
@@ -289,6 +296,84 @@ void    IRCServer::_PASS( const Message &msg, User &user )
     }
     if (msg.getParamets()[0] == _password)
         user.switchPassword();
+}
+
+void    IRCServer::_NICK( const Message &msg, User &user )
+{
+    std::string	buf;
+
+    if (msg.getCommand() != "NICK")
+        return ;
+    if (msg.getParamets().size() == 0)
+    {
+        buf = "431 NICK :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (_users.find(msg.getParamets()[0]) != _users.end())
+    {
+        buf = "433 * " + msg.getParamets()[0] + " :Nickname is already in use";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    std::multimap<std::string, User>::iterator it = _users.begin();
+    while (it != _users.end())
+    {
+        if (it->second.getSocket() == user.getSocket())
+        {
+            User copy(user);
+
+            copy.setNickname(msg.getParamets()[0]);
+            _removeUser(user.getSocket());
+            _addUser(copy);
+            return ;
+        }
+        it++;
+    }
+}
+
+void    IRCServer::_USER( const Message &msg, User &user )
+{
+    std::string	buf;
+
+    if (msg.getCommand() != "USER")
+        return ;
+    if (msg.getParamets().size() < 4)
+    {
+        buf = "461 NICK :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (user.isLogged())
+    {
+        buf = "462 :Already registered";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    buf = "001 "
+        + user.getNickname()
+        + " :Welcome to the Internet Relay Network, "
+        + user.getNickname()
+        + "\r\n";
+    buf += "002 "
+        + user.getNickname()
+        + " :Your host is <servername>, running version <version>"
+        + "\r\n";
+    buf += "003 "
+        + user.getNickname()
+        + " :This server was created <datetime>"
+        + "\r\n";
+    buf += "004 "
+        + user.getNickname()
+        + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz"
+        + "\r\n";
+    buf += "005 "
+        + user.getNickname()
+        + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 CHANMODES=beI,k,l,acimnpqrstz :are supported by this server"
+        + "\r\n";
+    _send(user.getSocket(), buf);
 }
 
 void    IRCServer::_PING( const Message &msg, User &user )
