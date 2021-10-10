@@ -73,9 +73,16 @@ public:
         void    _removeUser( int sockfd         );
 
         // Begin CMD
+
+		// NIZHEN EXEC !
         void    _PRIVMSG(const Message &msg, const User &usr);
         void    _PASS      ( const Message &msg, User &user );
-        void    _PING      ( const Message &msg, User &user );
+		void    _PING      ( const Message &msg, User &user );
+
+		void _NOTICE(const Message &msg, const User &usr); // k
+		void _JOIN(const Message &msg, User &usr); // bez const	// k
+		void _PART(const Message &msg, const User &usr); // k
+
 };
 
 #endif

@@ -300,3 +300,73 @@ void    IRCServer::_PING( const Message &msg, User &user )
     buf = "PONG " + _hostname;
     _send(user.getSocket(), buf);
 }
+
+void IRCServer::_NOTICE(const Message &msg, const User &usr) {
+	// ne mozhet bit; gruppoj
+	// is the same as PRIVMSG ? without sendng response to serv?
+}
+
+void IRCServer::_JOIN(const Message &msg, User &usr) {
+
+	// JOIN <channel>{, <channel>}[<key>{, <key>}
+	// 4.2.1 examples
+	// 1. msg.getParamets()[0] - eto nazvanie gruppi?
+
+	std::map<std::string, Channel>::iterator ch_it;
+	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
+	
+	if (ch_it != this->_channels.end()) {
+		// gruppa est' -> nado join
+		
+		// Если установлен пароль -> должен быть верным.
+		// buff >> pass
+		// if pass != get_group_pass -> invalid pass
+
+		// check mode of channnel
+
+		// check if he dosnt banned in channel
+
+		// if user has no more than 10 channels
+		// (405 ERR_TOOMANYCHANNELS)
+
+		ch_it->second.addUser(usr);
+	
+		// if joined user -> send msg about new user to all
+			// _PRIVMSG TO ALL USER IN GROUP
+
+		// and Если JOIN прошла хорошо, пользователь получает топик канала
+		ch_it->second.channel_info();	
+	
+	}
+	else {
+
+		Channel new_ch(msg.getParamets()[0]);
+		this->_channels.insert(std::make_pair(new_ch._name, new_ch));
+		// send msg that new channel is created
+		new_ch.addUser(usr);
+		new_ch.addChop(usr);
+		// std::cout to socket: name .. - is chop now and to server
+
+	}
+}
+
+void IRCServer::_PART(const Message &msg, const User &usr) {
+	// dolzhno rabotat' s neskol'kimi params(groups)!!
+	// Параметры: <channel>{,<channel>}
+	// Сообщение PART удаляет клиента, пославшего эту команду из списка
+	// активных пользователей для всех каналов, указанных в параметре.
+	// PART #twilight_zone // # is ok?
+
+	// loop po vsem channels -> delete user//
+
+	std::map<std::string, Channel>::iterator ch_it;
+	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
+	if (ch_it != this->_channels.end()) {
+		// gruppa finded
+		ch_it->second.removeUser(usr._nickname); // add getter getNick
+		// msg to all sockets that user left channel
+	}
+	else {
+		// group not finded -> return ERR
+	}
+}

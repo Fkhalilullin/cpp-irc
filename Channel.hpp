@@ -32,6 +32,7 @@ class Channel {
 		void addUser(User &_user); // ok
 		void addChop(User &_user); // ok 
 		void removeUser(std::string _nickname); // ok
+		// REMOVE USER != BAN USER -> make func ban user
 
 		const userMap	&getUsers() const; // ok
 		const userMap	&getChops() const; // ok
