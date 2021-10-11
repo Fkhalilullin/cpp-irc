@@ -11,125 +11,101 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
     memset(hostname, 0, sizeof(hostname));
     gethostbyname(hostname);
     _hostname = hostname;
-    std::cout << "host:" << hostname << std::endl;
+
+    _serverAdress.sin_family = AF_INET;
+	_serverAdress.sin_addr.s_addr = INADDR_ANY;
+	_serverAdress.sin_port = htons(this->_port);
+
 		// zanulentie fd set 
 
 }
 
 IRCServer::~IRCServer() {}
 
-void IRCServer::start() {
-	struct protoent *protocol;
-	struct sockaddr_in server_adress;
+void IRCServer::_accept()
+{
+    struct sockaddr_in temp;
 
-	protocol = getprotobyname("TCP");
+    socklen_t socklen = sizeof(struct sockaddr_in); // temp
+    int new_fd = accept(_listener, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
+    if (new_fd == -1)
+        throw std::invalid_argument(strerror(errno));
+    _addUser(new_fd);
+    if (_max_fd < new_fd)
+        _max_fd = new_fd;
+    FD_SET(new_fd, &_client_fds);
+    std::cout << GRE << "New connetion on socket : " << new_fd << std::endl;
+}
 
-	_server_fd = socket(AF_INET, SOCK_STREAM, protocol->p_proto); // need it? or 0?
-	if (_server_fd < 0)
+void IRCServer::start()
+{
+	_listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
+	if (_listener < 0)
 		throw std::invalid_argument(strerror(errno));
-    fcntl(_server_fd, F_SETFL, O_NONBLOCK);
+    _max_fd = _listener;
 
-	server_adress.sin_family = AF_INET;
-	server_adress.sin_addr.s_addr = INADDR_ANY;
-	server_adress.sin_port = htons(this->_port);
+    fcntl(_listener, F_SETFL, O_NONBLOCK);
 
     int yes = 1;
-    setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+    setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-	int b = bind(this->_server_fd, (struct sockaddr*)&server_adress, sizeof(server_adress));
+	int b = bind(_listener, (struct sockaddr*)&_serverAdress, sizeof(_serverAdress));
 	if (b < 0)
 		throw std::invalid_argument(strerror(errno));
-	
-	std::cout << "Socket is binding\n"; // del
-	std::cout << "Server was created\n"; // del
 
-	// server main_server;
-	// main_server.fd_serv = master_socket;
-
-	int l = listen(this->_server_fd, 10);
-	if (l < 0) {
+    int l = listen(_listener, 10);
+	if (l < 0)
 		throw std::invalid_argument(strerror(errno));
-	}
 
-	// FD_CLR(main_server.client_fds); clear all clients fds.. // need i?
-	FD_SET(this->_server_fd, &this->_client_fds);
-	this->_max_fd = this->_server_fd;
-	
-	fd_set select_fds; // just for copy
-	select_fds = this->_client_fds; // take the max id from class
+	FD_SET(_listener, &_client_fds);
+	_max_fd = _listener;
+	fd_set  select_fds; // just for copy
+	select_fds = _client_fds;
 
-	for (int i; select(this->_max_fd + 1, &select_fds, NULL, NULL, NULL) > -1; )
+	while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
     {
-		i = 0;
-		while (i < this->_max_fd + 1)
+		for (int i = 3; i < _max_fd + 1; i++)
         {
-			if (!FD_ISSET(i, &select_fds))
-            {
-                i++;
+			if (!FD_ISSET(i, &select_fds) || i == _listener)
                 continue ;
-            }
-            if (i == this->_server_fd)
+            std::string buf;
+
+            try
             {
-                // new client
-                struct sockaddr_in temp;
-
-                socklen_t socklen = sizeof(struct sockaddr_in); // temp
-                int new_fd = accept(this->_server_fd, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
-                
-                _addUser(new_fd);
-
-                // if (connect_fd < 0) ...
-                std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
-
-                if (this->_max_fd < new_fd)
-                    this->_max_fd = new_fd;
-                FD_SET(new_fd, &this->_client_fds);
-                std::cout << RED << "3" << END << std::endl;
+                _recv(i, buf);
+            }
+            catch (const std::exception& e)
+            {
+                close(i);
+                FD_CLR(i, &this->_client_fds);
+                _removeUser(i);
             }
 
-            else
+            Message msg(buf);
+            std::multimap<std::string, User>::iterator  it;
+            
+            it = _users.begin();
+            while (it != _users.end() && it->second.getSocket() != i)
+                it++;
+            if (it != _users.end())
             {
-                std::string buf;
-
-                try
-                {
-                    _recv(i, buf);
-                }
-                catch (const std::exception& e)
-                {
-                    close(i);
-                    FD_CLR(i, &this->_client_fds);
-                    _removeUser(i);
-                }
-
-                Message msg(buf);
-                std::multimap<std::string, User>::iterator  it;
-                
-                it = _users.begin();
-                while (it != _users.end() && it->second.getSocket() != i)
-                    it++;
-                if (it != _users.end())
-                {
-                    _CAP (msg, it->second);
-                    _PASS(msg, it->second);
-                    _PING(msg, it->second);
-                    _NICK(msg, it->second);
-                    _USER(msg, it->second);
-                    // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
-                }
-                std::cout << "Number of users : " 
-                            << _users.size() + _unloggedUsers.size() << std::endl;
-
-			}
-			i++;
+                _CAP (msg, it->second);
+                _PASS(msg, it->second);
+                _PING(msg, it->second);
+                _NICK(msg, it->second);
+                _USER(msg, it->second);
+                // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
+            }
+            std::cout << "Number of users : " 
+                        << _users.size() << std::endl;
 		}
-		select_fds = this->_client_fds;
-		// FD CLEAR!!
+        if (FD_ISSET(_listener, &select_fds))
+            _accept();
+		select_fds = _client_fds;
 	}
-	std::cout << "smth bad" << std::endl;
-	exit(11);
-
-
+    FD_ZERO(&select_fds );
+    FD_ZERO(&_client_fds);
+    throw std::invalid_argument(strerror(errno));
 }
 
 bool    IRCServer::_recv( int sockfd, std::string &buf ) const
@@ -266,7 +242,6 @@ void    IRCServer::_CAP( const Message &msg, User &user )
 
     if (msg.getCommand() != "CAP")
         return ;
-    // std::cout << RED << user.isPassworded() << END << std::endl;
     buf = "CAP * LS :";
     _send(user.getSocket(), buf);
     // buf = "CAP REQ :multi-prefix";
@@ -281,7 +256,6 @@ void    IRCServer::_PASS( const Message &msg, User &user )
 
     if (msg.getCommand() != "PASS")
         return ;
-    std::cout << RED << user.isPassworded() << END << std::endl;
     if (user.isPassworded())
     {
         buf = "462 :You may not reregister";
