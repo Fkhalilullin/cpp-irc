@@ -82,6 +82,14 @@ public:
 		void _NOTICE(const Message &msg, const User &usr); // k
 		void _JOIN(const Message &msg, User &usr); // bez const	// k
 		void _PART(const Message &msg, const User &usr); // k
+		void _OPER(const Message &msg); // k
+		void _LIST(const Message &msg); // k
+		void _NAMES(const Message &msg); // k
+
+        // QUIT cmd -? -> JUST exit from server?
+
+        void _KICK(const Message &msg, const User &usr);
+        void _INVITE(const Message &msg);
 
 };
 

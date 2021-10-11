@@ -370,3 +370,101 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 		// group not finded -> return ERR
 	}
 }
+
+void IRCServer::_OPER(const Message &msg) {
+	// Команда: OPER
+	// Параметры: <user> <password>
+
+	// msg.getParamets()[0] - eto user?
+	// msg.getParamets()[1] - eto pass?
+	// pass == with server pass?
+
+	std::string str_user = msg.getParamets()[0];
+	std::multimap<std::string, User>::iterator us_it;
+
+	us_it = this->_users.find(str_user); // najti group
+	
+	if (_users.count(str_user) > 1)
+		std::cout << "more one user with this name" << std::endl;
+		// ERR
+
+	if (us_it != this->_users.end())
+		this->_operators.insert(std::make_pair(str_user, &us_it->second));
+	// notice server that str_name is serv operator now ..
+
+}
+
+void IRCServer::_LIST(const Message &msg) {
+	// Команда: LIST
+	// Параметры: [<channel>{,<channel>} [<server>]]
+	// NO cout channel if it secret and user doesnt have the accses
+
+	// if params > 1 - cout 1 channel + topic
+	// CHECK IF MODE IS OK
+
+	if (this->_channels.size()) {
+		std::cout << "list of channels and their topics:" << std::endl;
+		std::map<std::string, Channel>::iterator ch_it;
+		ch_it = this->_channels.begin();
+		std::cout << ch_it->first << " - " << ch_it->second._topic << std::endl; // GET TOPIC FUNC NEED
+	}
+}
+
+void IRCServer::_NAMES(const Message &msg) {
+	// Команда: NAMES
+	// Параметры: [<channel>{,<channel>}]
+	// esli NAMES -> to vse channels -> users
+	// elsi names + chanlel -> vse users in channel
+	// Имена каналов, которые они могут видеть это те, которые не приватные
+	// (+p) или секретные (+s) // CHECK MODE
+
+	// all channels
+	if (this->_channels.size()) {
+		std::map<std::string, Channel>::iterator ch_it;
+		ch_it = this->_channels.begin();
+		
+		// std::map<std::string, User*>::iterator us_it; // for map of users in channel
+		// for (; ch_it != this->_channels.end(); ch_it++)
+			// ch_it->second._users; // make method show only users in this channel
+		
+	}
+}
+
+void IRCServer::_KICK(const Message &msg, const User &usr) {
+	// Команда: KICK
+	// Параметры: <channel> <user> [<comment>]
+
+	std::string str_channel = msg.getParamets()[0]; // true??
+	std::string str_user = msg.getParamets()[1]; // true??
+
+	// channel exists?
+	std::map<std::string, Channel>::iterator ch_it;
+	ch_it = this->_channels.begin();
+	// if (ch_it != this->_channels.end())
+		//
+	// if (ch_it->second._users.find(str_user))
+		// ch_it->second.removeUser(str_user);
+		// will socket of user deleted?
+	
+
+	// else
+		// no channel
+}
+
+
+void IRCServer::_INVITE(const Message &msg) { // add USER
+
+	// Команда: INVITE
+	// Параметры: <nickname> <channel>
+
+	std::string str_channel = msg.getParamets()[0]; // true??
+	std::string str_user = msg.getParamets()[1]; // true??
+
+	// 1. check if client who invites new user -> is choop in channel
+	std::map<std::string, Channel>::iterator ch_it;
+	ch_it =  this->_channels.find(str_channel);
+	// if (ch_it != this->_channels.end())
+		// ch_it->second.addChop(usr);
+
+
+}
