@@ -4,7 +4,7 @@
 IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_port(port),
 	_password(pass),
-    _delimeter("\n")
+    _delimeter("\r\n")
 {
     char    hostname[30];
 
@@ -70,6 +70,7 @@ void IRCServer::start()
                 continue ;
             std::string buf;
 
+            // receiving data
             try
             {
                 _recv(i, buf);
@@ -80,27 +81,9 @@ void IRCServer::start()
                 FD_CLR(i, &this->_client_fds);
                 _removeUser(i);
             }
-
+            // command execution
+            _execute(i, buf);
             
-            std::multimap<std::string, User>::iterator  it;
-            
-            it = _users.begin();
-            while (it != _users.end() && it->second.getSocket() != i)
-                it++;
-            if (it != _users.end())
-            {
-                Message msg(buf, it->second);
-
-                _CAP (msg, it->second);
-                _PASS(msg, it->second);
-                _PING(msg, it->second);
-                if (it->second.isPassworded())
-                {
-                    _NICK(msg, it->second);
-                    _USER(msg, it->second);
-                }
-                // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
-            }
             std::cout << "Number of users : " 
                         << _users.size() << std::endl;
 		}
@@ -219,6 +202,34 @@ void    IRCServer::_addUser(const User &user)
     _users.insert(tmp);
 }
 
+void    IRCServer::_execute( int sockfd, const std::string &buf )
+{
+    std::multimap<std::string, User>::iterator  it;
+            
+    it = _users.begin();
+    while (it != _users.end() && it->second.getSocket() != sockfd)
+        it++;
+    if (it == _users.end())
+        return ; // no such user
+    
+    Message msg(buf, it->second);
+    User &user = it->second;
+
+    _CAP (msg, user);
+    _PASS(msg, user);
+    _PING(msg, user);
+    if (user.isPassworded())
+    {
+        _NICK(msg, user);
+        _USER(msg, user);
+    }
+    if (user.isPassworded() && user.isLogged())
+    {
+        if (msg.getCommand() == "PRIVMSG")
+            _PRIVMSG(msg, user);
+    }
+}
+
 void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	std::multimap<std::string, User>::iterator us_it;
     std::map<std::string, Channel>::iterator ch_it;
@@ -242,7 +253,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	}
 }
 
-void    IRCServer::_CAP( const Message &msg, User &user )
+void    IRCServer::_CAP( const Message &msg, const User &user ) const
 {
     std::string	buf;
 
@@ -365,7 +376,7 @@ void    IRCServer::_USER( const Message &msg, User &user )
         _send(user.getSocket(), buf);
         return ;
     }
-
+    user.switchLogged();
     buf = "001 "
         + user.getNickname()
         + " :Welcome to the Internet Relay Network, "
@@ -390,7 +401,7 @@ void    IRCServer::_USER( const Message &msg, User &user )
     _send(user.getSocket(), buf);
 }
 
-void    IRCServer::_PING( const Message &msg, User &user )
+void    IRCServer::_PING( const Message &msg, const User &user ) const
 {
     std::string	buf;
 

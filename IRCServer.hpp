@@ -42,7 +42,9 @@
 #define BLU "\033[34m"
 #define END "\033[37m"
 
-#define NICKLEN 9
+#define MAXCHANNELS 20
+#define NICKLEN     9
+#define TOPICLEN    255
 
 class User;
 class Channel;
@@ -86,21 +88,21 @@ class IRCServer
 
         // Begin CMD
 
-		// NIZHEN EXEC !
-        void    _PRIVMSG(const Message &msg, const User &usr);
-        void    _CAP       ( const Message &msg, User &user );
-        void    _PASS      ( const Message &msg, User &user );
-        void    _NICK      ( const Message &msg, User &user );
-        void    _USER      ( const Message &msg, User &user );
+		void    _execute( int sockfd, const std::string &buf );
+        void    _PRIVMSG( const Message &msg, const User &usr);
+        void    _CAP    ( const Message &msg, const User &user ) const;
+        void    _PASS   ( const Message &msg, User &user );
+        void    _NICK   ( const Message &msg, User &user );
+        void    _USER   ( const Message &msg, User &user );
 
-		void    _PING      ( const Message &msg, User &user );
+		void    _PING   ( const Message &msg, const User &user ) const;
 
-		void _NOTICE(const Message &msg, const User &usr); // k
-		void _JOIN(const Message &msg, User &usr); // bez const	// k
-		void _PART(const Message &msg, const User &usr); // k
-		void _OPER(const Message &msg); // k
-		void _LIST(const Message &msg); // k
-		void _NAMES(const Message &msg); // k
+		void    _NOTICE (const Message &msg, const User &usr); // k
+		void    _JOIN   (const Message &msg, User &usr); // bez const	// k
+		void    _PART   (const Message &msg, const User &usr); // k
+		void    _OPER   (const Message &msg); // k
+		void    _LIST   (const Message &msg); // k
+		void    _NAMES  (const Message &msg); // k
 
         // QUIT cmd -? -> JUST exit from server?
 
