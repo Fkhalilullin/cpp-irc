@@ -112,7 +112,6 @@ void IRCServer::start() {
                         _removeUser(i);
                     }
 
-					// Message msg(buf);
 
                     std::multimap<std::string, User>::iterator  it;
                     
@@ -121,8 +120,10 @@ void IRCServer::start() {
                         it++;
                     if (it != _users.end())
                     {
+					    Message msg(buf, it->second);
                         // _PASS(msg, it->second);
                         // _PING(msg, it->second);
+                        _PRIVMSG (msg, it->second);
                     }
 
 					// zdes' budet nash UMNIJ RECIEVE //
@@ -248,24 +249,25 @@ void    IRCServer::_removeUser(int sockfd)
 }
 
 void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
-	// msg.cmd == PRIVMSG -> budet ran'she
-	
-	// check if client exists ( USR ) // nickname
-	// sam sebe otpravit' miozhet?
-	// send send( int sockfd - komu, const std::string &buf - soobshenie//
-	
-	// proverka na valid imeni group budet v sozdanii grouppi !
-	
-	std::map<std::string, User>::iterator us_it;
-	us_it = this->_users.begin();
+	std::multimap<std::string, User>::iterator us_it;
+    std::map<std::string, Channel>::iterator ch_it;
 
-	us_it = this->_users.find(msg.getParamets()[0]);
-	std::cout << "YES\n";
-	if (us_it != this->_users.end()) {
-		_send(usr.getSocket(), msg.getParamets().back());
-	}
-	else {
-		_send(usr.getSocket(), "Not work");
+	us_it = this->_users.begin();
+    ch_it = this->_channels.begin();
+
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+	    us_it = this->_users.find(msg.getParamets()[i]);
+        ch_it = this->_channels.find(msg.getParamets()[i]);
+	    if (us_it != this->_users.end()) {
+            std::string message(":" + msg.getPrefix() + " PRIVMSG " + us_it->second.getNickname() + " :" + msg.getParamets().back()); 
+            std::cout << message << std::endl;
+		    _send(us_it->second.getSocket(), message);
+        }
+        else if (ch_it != this->_channels.end()) {
+            std::string message(":" + msg.getPrefix() + " PRIVMSG " + ch_it->second.getName() + " :" + msg.getParamets().back()); 
+            std::cout << message << std::endl;
+		    _send(us_it->second.getSocket(), message);
+        }
 	}
 }
 
