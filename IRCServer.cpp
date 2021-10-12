@@ -90,6 +90,11 @@ void IRCServer::start()
             if (it != _users.end())
             {
                 Message msg(buf, it->second);
+				
+				if (msg.getCommand() == "join") // k test
+					this->_JOIN(msg, it->second); // k test
+				if (msg.getCommand() == "list") // k test
+					this->_LIST(msg); // k test
 
                 _CAP (msg, it->second);
                 _PASS(msg, it->second);
@@ -153,12 +158,12 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             buf       += c_buf;
         }
     }
-    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
-    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
-    std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
-    std::cout << GRE << "msg     : " << END << buf << std::endl;
-    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
+    // std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
+    // std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
+    // std::cout << GRE << "socket  : " << END << sockfd << std::endl;
+    // // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
+    // std::cout << GRE << "msg     : " << END << buf << std::endl;
+    // std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (bytes == -1 ? false : true);
 }
@@ -184,12 +189,12 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
         total += bytes;
         bytesLeft -= bytes;
     }
-    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
-    std::cout << YEL << "------------SENDED------------" << END << std::endl;
-    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
-    std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
-    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
+    // std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    // std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    // std::cout << YEL << "socket  : " << END << sockfd << std::endl;
+    // // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    // std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
+    // std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
 }
 
@@ -289,13 +294,13 @@ bool    IRCServer::_isCorrectNick( const std::string &nick )
 {
     if (nick.length() > NICKLEN || nick.length() == 0)
         return (false);
-    if (!(nick[0] >= 'a' && nick[0] <= 'z' || nick[0] >= 'A' && nick[0] <= 'Z'))
+    if (!((nick[0] >= 'a' && nick[0] <= 'z') || (nick[0] >= 'A' && nick[0] <= 'Z')))
         return (false);
     for (size_t i = 1; i < nick.length(); ++i)
     {
-        if (!(     nick[i] >= 'a' && nick[i] <= 'z'
-                || nick[i] >= 'A' && nick[i] <= 'Z'
-                || nick[i] >= '0' && nick[i] <= '9'
+        if (!(     (nick[i] >= 'a' && nick[i] <= 'z')
+                || (nick[i] >= 'A' && nick[i] <= 'Z')
+                || (nick[i] >= '0' && nick[i] <= '9')
                 || nick[i] == '-'
                 || nick[i] == '['
                 || nick[i] == ']'
@@ -406,26 +411,78 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
+	
+	// if (!msg.getParamets()[0][0])
+		// return;
 
 	// JOIN <channel>{, <channel>}[<key>{, <key>}
 	// 4.2.1 examples
+
+	// for (int i = 0; i < msg.getParamets().size(); i++)
+	// 	std::cout << YEL << msg.getParamets()[i] << END<< std::endl;
+
 	usr.setNickname("ebanat");
-	Channel test_ch("klub");
-	this->_channels.insert(std::make_pair("klub", test_ch));
+	// Channel test_ch("klub");
+	// this->_channels.insert(std::make_pair("klub", test_ch));
 
+	// parse all cmds and other
 
+		std::cout << msg.getParamets()[0] << std::endl;
+	if (msg.getParamets()[0][0] != '#' && msg.getParamets()[0][0] != '&') {
 
-	// # and &
+		std::cout << msg.getParamets()[0] << std::endl;
+		std::cout << "first param should be group" << std::endl;
+		return;
+	}
+
+	std::vector<std::string> params;
+	std::vector<std::string> passwords;
 	for (int i = 0; i < msg.getParamets().size(); i++) {
+		
+		std::string tmp_param = msg.getParamets()[i];
+		for (int k = 0; k < tmp_param.size(); k++) { // check valkd name
+			if (tmp_param[k] == ' ' ||
+				tmp_param[k] == ',' || // 
+				tmp_param[k] == '\a' || // bell
+				tmp_param[k] == '\0' || // nul // real?
+				tmp_param[k] == '\r' || // cr
+				tmp_param[k] == '\n') { // lf
+					std::cout << "invalid name of group" << std::endl; // send to serv
+					return ;
+			}
+		}
+		
+		if (tmp_param[0] == '#' || tmp_param[0] == '&') {
+			tmp_param.erase(0, 1);
+			params.push_back(tmp_param);
+		}
+		else {
+			passwords.push_back(tmp_param);
+		}
+	}
+
+	if (passwords.size() > params.size()) {
+		std::cout << "more passes then groups" << std::endl;
+		return;
+	}
+
+	for (int i = 0; i < params.size(); i++) {
+
+		std::string tmp_group = params[i];
 
 		std::map<std::string, Channel>::iterator ch_it;
-		ch_it = this->_channels.find(msg.getParamets()[i]); // najti group
+		ch_it = this->_channels.find(tmp_group); // najti grouppy
 
 		if (ch_it != this->_channels.end()) {
-
+			// proverit' tam li on / mphet uzhe est'
 			std::cout << "group exist!" << std::endl;
 			// gruppa est' -> nado join
+
+			// std::cout << YEL << "it " << ch_it->second._name << END << std::endl;
 			
+			// try passi
+			if (ch_it->second._pass == passwords[i])
+				std::cout << YEL << "pass is ok" << END << std::endl;
 			// Если установлен пароль -> должен быть верным.
 			// buff >> pass
 			// if pass != get_group_pass -> invalid pass
@@ -437,32 +494,47 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			// if user has no more than 10 channels
 			// (405 ERR_TOOMANYCHANNELS)
 
-			ch_it->second.addUser(usr);
+			// ch_it->second.addUser(usr);
 		
 			// if joined user -> send msg about new user to all
 				// _PRIVMSG TO ALL USER IN GROUP
 
 			// and Если JOIN прошла хорошо, пользователь получает топик канала
-			ch_it->second.channel_info();	
+			// ch_it->second.channel_info();	
 		
 		}
 		else {
 
 			std::cout << "group creating..." << std::endl;
-			if (usr._nickname == "") // no name user
+			if (usr._nickname == "") {
+				std::cout << "group should have name of owner" << std::endl;
 				return;
+			}
 
-			Channel new_ch(msg.getParamets()[i]);
+			Channel new_ch(tmp_group);
+			// Channel *new_ch = new Channel(tmp_group);
 			this->_channels.insert(std::make_pair(new_ch._name, new_ch));
+			
 			new_ch.addUser(usr);
 			new_ch.addChop(usr);
+			
+			try {
+				passwords.at(i);
+				new_ch._pass = passwords[i];
+			}
+			catch ( ... ) {}
 
 			// new_ch.channel_info();
 			// info to server that usr is chop now to server
 
 			std::string to_send = "now you an admin of " + new_ch._name + " group";
-			std::cout << "!!!1111" << std::endl;
 			this->_send(usr.getSocket(), to_send);
+			
+			std::cout << RED; // del
+			std::cout << "name of new channel		" << new_ch._name << std::endl;
+			std::cout << "pass of new channel		" << new_ch._pass << std::endl;
+            new_ch._topic = "EBAT' TEMA";
+			std::cout << END; // to here
 		}
 	}
 }
@@ -518,12 +590,14 @@ void IRCServer::_LIST(const Message &msg) {
 
 	// if params > 1 - cout 1 channel + topic
 	// CHECK IF MODE IS OK
+    std::cout << "num of grps " << this->_channels.size() << std::endl;;
 
 	if (this->_channels.size()) {
 		std::cout << "list of channels and their topics:" << std::endl;
 		std::map<std::string, Channel>::iterator ch_it;
 		ch_it = this->_channels.begin();
-		std::cout << ch_it->first << " - " << ch_it->second._topic << std::endl; // GET TOPIC FUNC NEED
+        for (; ch_it != _channels.end(); ch_it++)
+		    std::cout << ch_it->first << " ---- " << ch_it->second._topic << std::endl; // GET TOPIC FUNC NEED
 	}
 }
 

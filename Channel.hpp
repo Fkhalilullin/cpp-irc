@@ -54,6 +54,10 @@ class Channel {
 		// ПРОВЕРКА ИМеНИ КАНАЛА С СУЩЕСТВУЮЩИМИ ЮЗЕРАМИ
 
 
+		std::string _pass;
+		// make set_pass 
+
+
 
 
 };

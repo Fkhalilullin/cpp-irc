@@ -9,6 +9,7 @@ Channel::Channel(std::string ch_name) {
 		this->_name = ch_name;
 		this->_limit_users = 10;
 		this->_topic = "default";
+		// this->_pass = "123";
 
 		std::cout << "channel \"" << this->_name <<  "\" created\n"; // del it
 		// 1. nado li ogranicheniie na imya channela #$. and ....
