@@ -365,7 +365,7 @@ void    IRCServer::_USER( const Message &msg, User &user )
         _send(user.getSocket(), buf);
         return ;
     }
-
+    user.switchLogged();
     buf = "001 "
         + user.getNickname()
         + " :Welcome to the Internet Relay Network, "
