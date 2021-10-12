@@ -33,8 +33,9 @@ class Channel {
 		void addChop(User &_user); // ok 
 		void removeUser(std::string _nickname); // ok
 
-		const userMap	&getUsers() const; // ok
-		const userMap	&getChops() const; // ok
+		const userMap		&getUsers() const; // ok
+		const userMap		&getChops() const; // ok
+		const std::string	&getName() const;
 
 		// NEW FUNCS //
 		int _limit_users; // ok // make it const

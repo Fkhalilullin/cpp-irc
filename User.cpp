@@ -64,7 +64,6 @@ bool	User::isPassworded() const
 	return (_password);
 }
 
-std::string	User::getNickname () const
-{
-	return (_nickname);
+const std::string User::getNickname() const {
+	return this->_nickname;
 }

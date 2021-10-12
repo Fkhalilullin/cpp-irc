@@ -88,6 +88,10 @@ const std::map<std::string, User*> &Channel::getChops() const {
 	return this->_chops;
 }
 
+const std::string &Channel::getName() const {
+	return this->_name;
+}
+
 void Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
 
 	this->_ban_list.push_back(rem_name);

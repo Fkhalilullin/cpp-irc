@@ -32,7 +32,8 @@ class User {
 		int		getSocket   () const;
 		bool	isLogged    () const;
 		bool	isPassworded() const;
-		std::string	getNickname () const;
+		const std::string getNickname() const;
+
 };
 
 
