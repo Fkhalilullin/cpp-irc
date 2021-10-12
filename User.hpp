@@ -8,6 +8,7 @@ class User {
 	public: // private
 
 		User();
+		User( const User &rhs );
 		~User();
 		
 
@@ -31,8 +32,8 @@ class User {
 		int		getSocket   () const;
 		bool	isLogged    () const;
 		bool	isPassworded() const;
-
 		const std::string getNickname() const;
+
 };
 
 

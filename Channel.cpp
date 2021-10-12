@@ -48,6 +48,8 @@ void Channel::addChop(User &new_chop) {
 
 void Channel::channel_info() {
 
+	// add TOPIC CHANEL
+
 	// add time of creating
 	std::cout << "info about channel " << std::endl;
 	std::cout << "channel name: " << this->_name << std::endl;
@@ -55,7 +57,7 @@ void Channel::channel_info() {
 	std::cout << "list of users: " << std::endl;
 	std::map<std::string, User*>::iterator iter = this->_users.begin();
 	for (; iter != this->_users.end(); iter++) {
-		std::cout << "nickname: " <<  iter->first << " socket: " << iter->second->_socket << std::endl;
+		std::cout << "nickname: " <<  iter->first << ", socket: " << iter->second->_socket << std::endl;
 	}
 	
 	// list of chops
@@ -94,7 +96,7 @@ const std::string &Channel::getName() const {
 
 void Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
 
-	this->_ban_list.push_back(rem_name);
+	// this->_ban_list.push_back(rem_name); replace ti to "ban user"
 	
 	this->_users.erase(rem_name);
 	this->_chops.erase(rem_name); // if he wasnt a chop?

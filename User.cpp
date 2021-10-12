@@ -6,6 +6,17 @@ User::User() {
 	_socket = -1;
 }
 
+User::User( const User &rhs ) : _nickname  (rhs._nickname  ),
+                                _username  (rhs._username  ),
+                                _realName  (rhs._realName  ),
+                                _serverName(rhs._serverName),
+                                _password  (rhs._password  ),
+                                _logged    (rhs._logged    ),
+                                _socket    (rhs._socket    )
+{
+
+}
+
 User::~User() {
 
 }

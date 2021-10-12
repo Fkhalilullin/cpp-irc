@@ -42,40 +42,70 @@
 #define BLU "\033[34m"
 #define END "\033[37m"
 
+#define NICKLEN 9
+
 class User;
 class Channel;
 class Message;
 
 class IRCServer
 {
-public:
-    int                              _max_fd; // ne bolshe 10
-    int                              _server_fd;
-    unsigned int                     _port;
-    std::string                      _password;
-    fd_set                           _client_fds;
-    std::multimap<std::string, User> _users;
-    std::vector<User>                _unloggedUsers;
-    std::map<std::string, User*>     _operators;
-    std::map<std::string, Channel>   _channels;
-    std::string                      _delimeter;
-    std::string                      _hostname;
+    private:
+        int                              _listener;
+        int                              _max_fd; // ne bolshe 10
+        unsigned int                     _port;
+        fd_set                           _client_fds;
+        struct sockaddr_in               _serverAdress;
+        std::string                      _hostname;
+        std::string                      _password;
+        std::multimap<std::string, User> _users;
+        std::map<std::string, User*>     _operators;
+        std::map<std::string, Channel>   _channels;
+        std::string                      _delimeter;
+        
 
-    explicit IRCServer( unsigned int port, std::string pass );
-    ~IRCServer();
-    void        start();
-    // void        stop ();
+
+        
+
+
+    public:
+        explicit IRCServer( unsigned int port, std::string pass );
+        ~IRCServer();
+        void        start();
+        // void        stop ();
 
     private:
-        bool    _recv       ( int sockfd,       std::string &buf ) const;
-        bool    _send       ( int sockfd, const std::string &buf ) const;
-        void    _exec       ( const Message &msg );
-        void    _removeUser ( int sockfd         );
+        void    _accept    ();
+        bool    _recv      ( int sockfd,       std::string &buf ) const;
+        bool    _send      ( int sockfd, const std::string &buf ) const;
+        void    _exec      ( const Message &msg );
+        void    _addUser   ( int sockfd         );
+        void    _addUser   ( const User &user   );
+        void    _removeUser( int sockfd         );
+        bool    _isCorrectNick( const std::string &nick );
 
         // Begin CMD
-        void    _PRIVMSG ( const Message &msg, const User &usr );
+
+		// NIZHEN EXEC !
+        void    _PRIVMSG(const Message &msg, const User &usr);
+        void    _CAP       ( const Message &msg, User &user );
         void    _PASS      ( const Message &msg, User &user );
-        void    _PING      ( const Message &msg, User &user );
+        void    _NICK      ( const Message &msg, User &user );
+        void    _USER      ( const Message &msg, User &user );
+
+		void    _PING      ( const Message &msg, User &user );
+
+		void _NOTICE(const Message &msg, const User &usr); // k
+		void _JOIN(const Message &msg, User &usr); // bez const	// k
+		void _PART(const Message &msg, const User &usr); // k
+		void _OPER(const Message &msg); // k
+		void _LIST(const Message &msg); // k
+		void _NAMES(const Message &msg); // k
+
+        // QUIT cmd -? -> JUST exit from server?
+
+        void _KICK(const Message &msg, const User &usr);
+        void _INVITE(const Message &msg);
 };
 
 #endif
