@@ -48,25 +48,32 @@ class Message;
 
 class IRCServer
 {
-public:
-    int                              _max_fd; // ne bolshe 10
-    int                              _server_fd;
-    unsigned int                     _port;
-    std::string                      _password;
-    fd_set                           _client_fds;
-    std::multimap<std::string, User> _users;
-    std::vector<User>                _unloggedUsers;
-    std::map<std::string, User*>     _operators;
-    std::map<std::string, Channel>   _channels;
-    std::string                      _delimeter;
-    std::string                      _hostname;
+    private:
+        int                              _listener;
+        int                              _max_fd; // ne bolshe 10
+        unsigned int                     _port;
+        fd_set                           _client_fds;
+        struct sockaddr_in               _serverAdress;
+        std::string                      _hostname;
+        std::string                      _password;
+        std::multimap<std::string, User> _users;
+        std::map<std::string, User*>     _operators;
+        std::map<std::string, Channel>   _channels;
+        std::string                      _delimeter;
+        
 
-    explicit IRCServer( unsigned int port, std::string pass );
-    ~IRCServer();
-    void        start();
-    // void        stop ();
+
+        
+
+
+    public:
+        explicit IRCServer( unsigned int port, std::string pass );
+        ~IRCServer();
+        void        start();
+        // void        stop ();
 
     private:
+        void    _accept    ();
         bool    _recv      ( int sockfd,       std::string &buf ) const;
         bool    _send      ( int sockfd, const std::string &buf ) const;
         void    _exec      ( const Message &msg );
