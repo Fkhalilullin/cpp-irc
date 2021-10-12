@@ -42,6 +42,8 @@
 #define BLU "\033[34m"
 #define END "\033[37m"
 
+#define NICKLEN 9
+
 class User;
 class Channel;
 class Message;
@@ -80,6 +82,7 @@ class IRCServer
         void    _addUser   ( int sockfd         );
         void    _addUser   ( const User &user   );
         void    _removeUser( int sockfd         );
+        bool    _isCorrectNick( const std::string &nick );
 
         // Begin CMD
         void    _PRIVMSG(const Message &msg, const User &usr);

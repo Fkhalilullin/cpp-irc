@@ -34,7 +34,7 @@ void IRCServer::_accept()
     if (_max_fd < new_fd)
         _max_fd = new_fd;
     FD_SET(new_fd, &_client_fds);
-    std::cout << GRE << "New connetion on socket : " << new_fd << std::endl;
+    std::cout << GRE << "New connetion on socket : " << new_fd << END << std::endl;
 }
 
 void IRCServer::start()
@@ -90,11 +90,15 @@ void IRCServer::start()
             if (it != _users.end())
             {
                 Message msg(buf, it->second);
+
                 _CAP (msg, it->second);
                 _PASS(msg, it->second);
                 _PING(msg, it->second);
-                _NICK(msg, it->second);
-                _USER(msg, it->second);
+                if (it->second.isPassworded())
+                {
+                    _NICK(msg, it->second);
+                    _USER(msg, it->second);
+                }
                 // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
             }
             std::cout << "Number of users : " 
@@ -244,12 +248,11 @@ void    IRCServer::_CAP( const Message &msg, User &user )
 
     if (msg.getCommand() != "CAP")
         return ;
-    buf = "CAP * LS :";
-    _send(user.getSocket(), buf);
-    // buf = "CAP REQ :multi-prefix";
-    // _send(user.getSocket(), buf);
-    // buf = "CAP * ACK multi-prefix";
-    // _send(user.getSocket(), buf);
+    if (msg.getParamets().size() > 0 && msg.getParamets()[0] == "LS")
+    {
+        buf = "CAP * LS :";
+        _send(user.getSocket(), buf);
+    }
 }
 
 void    IRCServer::_PASS( const Message &msg, User &user )
@@ -272,6 +275,39 @@ void    IRCServer::_PASS( const Message &msg, User &user )
     }
     if (msg.getParamets()[0] == _password)
         user.switchPassword();
+    else
+    {
+        if (user.getNickname().empty())
+            buf = "464 * :Password incorrect";
+        else
+            buf = "464 " + user.getNickname() + " :Password incorrect";
+        _send(user.getSocket(), buf);
+    }
+}
+
+bool    IRCServer::_isCorrectNick( const std::string &nick )
+{
+    if (nick.length() > NICKLEN || nick.length() == 0)
+        return (false);
+    if (!(nick[0] >= 'a' && nick[0] <= 'z' || nick[0] >= 'A' && nick[0] <= 'Z'))
+        return (false);
+    for (size_t i = 1; i < nick.length(); ++i)
+    {
+        if (!(     nick[i] >= 'a' && nick[i] <= 'z'
+                || nick[i] >= 'A' && nick[i] <= 'Z'
+                || nick[i] >= '0' && nick[i] <= '9'
+                || nick[i] == '-'
+                || nick[i] == '['
+                || nick[i] == ']'
+                || nick[i] == '\\'
+                || nick[i] == '\''
+                || nick[i] == '^'
+                || nick[i] == '{'
+                || nick[i] == '}'
+            ))
+            return (false);
+    }
+    return (true);
 }
 
 void    IRCServer::_NICK( const Message &msg, User &user )
@@ -282,31 +318,33 @@ void    IRCServer::_NICK( const Message &msg, User &user )
         return ;
     if (msg.getParamets().size() == 0)
     {
-        buf = "431 NICK :Not enough parameters";
+        buf = "431 :No nickname given";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (!_isCorrectNick(msg.getParamets()[0]))
+    {
+        buf = "432 " + msg.getParamets()[0] + " :Erroneus nickname";
         _send(user.getSocket(), buf);
         return ;
     }
     if (_users.find(msg.getParamets()[0]) != _users.end())
     {
-        buf = "433 * " + msg.getParamets()[0] + " :Nickname is already in use";
+        buf = "433 " + msg.getParamets()[0] + " :Nickname is already in use";
         _send(user.getSocket(), buf);
         return ;
     }
+    std::string oldNick(user.getNickname());
+    User        copy(user);
 
-    std::multimap<std::string, User>::iterator it = _users.begin();
-    while (it != _users.end())
-    {
-        if (it->second.getSocket() == user.getSocket())
-        {
-            User copy(user);
-
-            copy.setNickname(msg.getParamets()[0]);
-            _removeUser(user.getSocket());
-            _addUser(copy);
-            return ;
-        }
-        it++;
-    }
+    copy.setNickname(msg.getParamets()[0]);
+    _removeUser(user.getSocket());
+    _addUser(copy);
+    if (oldNick.empty())
+        buf = "NICK " + copy.getNickname();
+    else
+        buf = ":" + oldNick + " NICK :" + copy.getNickname();
+    _send(user.getSocket(), buf);
 }
 
 void    IRCServer::_USER( const Message &msg, User &user )
