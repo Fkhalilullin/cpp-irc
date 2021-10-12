@@ -1,6 +1,8 @@
 #ifndef IRCSERVER_HPP
 #define IRCSERVER_HPP
 
+#include "utils.hpp"
+
 #include <sys/select.h>
 
 #include <map>
@@ -64,11 +66,6 @@ class IRCServer
         std::map<std::string, User*>     _operators;
         std::map<std::string, Channel>   _channels;
         std::string                      _delimeter;
-        
-
-
-        
-
 
     public:
         explicit IRCServer( unsigned int port, std::string pass );
@@ -101,7 +98,7 @@ class IRCServer
 		void    _JOIN   (const Message &msg, User &usr); // bez const	// k
 		void    _PART   (const Message &msg, const User &usr); // k
 		void    _OPER   (const Message &msg); // k
-		void    _LIST   (const Message &msg); // k
+		void    _LIST   (const Message &msg, const User &user); //const;
 		void    _NAMES  (const Message &msg); // k
 
         // QUIT cmd -? -> JUST exit from server?

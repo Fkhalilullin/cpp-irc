@@ -1,7 +1,7 @@
 NAME = a.out # rename
-SRCS =  User.cpp main.cpp Channel.cpp IRCServer.cpp Message.cpp
+SRCS =  utils.cpp User.cpp main.cpp Channel.cpp IRCServer.cpp Message.cpp
 
-HEADER = Channel.hpp IRCServer.hpp Message.hpp User.hpp
+HEADER = utils.hpp Channel.hpp IRCServer.hpp Message.hpp User.hpp
 
 OBJS = $(SRCS:.cpp=.o)
 

@@ -13,8 +13,9 @@
 #include <iostream>
 
 #define PORT "7770" // Порт, к которому подключается клиент
+#define SERVER "irc.rusnet.org.ru"
 
-#define MAXDATASIZE 100 // максимальное число байт, принимаемых за один раз
+#define MAXDATASIZE 1000 // максимальное число байт, принимаемых за один раз
 
 #define RED "\033[31m"
 #define GRE "\033[32m"
@@ -38,17 +39,11 @@ int main(int argc, char *argv[])
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    if (argc != 2)
-    {
-        fprintf(stderr,"usage: client hostnamen");
-        exit(1);
-    }
-
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0)
+    if ((rv = getaddrinfo(SERVER, PORT, &hints, &servinfo)) != 0)
     {
         fprintf(stderr, "getaddrinfo: %sn", gai_strerror(rv));
         return 1;
@@ -152,6 +147,64 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0';
         std::cout << YEL << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << YEL << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << YEL << buf << END << std::endl << std::endl;
+        sbuf = "LIST #politics,#mytopic\r\n";
+        send(sockfd, sbuf.c_str(), sbuf.length(), 0);
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1)
+        {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        std::cout << RED << buf << END << std::endl << std::endl;
         // printf("client: received ‘%s’n",buf);
         
 

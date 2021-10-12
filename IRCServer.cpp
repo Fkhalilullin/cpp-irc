@@ -227,6 +227,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     {
         if (msg.getCommand() == "PRIVMSG")
             _PRIVMSG(msg, user);
+        _LIST(msg, user);
     }
 }
 
@@ -464,14 +465,14 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 				return;
 
 			Channel new_ch(msg.getParamets()[i]);
-			this->_channels.insert(std::make_pair(new_ch._name, new_ch));
+			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 			new_ch.addUser(usr);
 			new_ch.addChop(usr);
 
 			// new_ch.channel_info();
 			// info to server that usr is chop now to server
 
-			std::string to_send = "now you an admin of " + new_ch._name + " group";
+			std::string to_send = "now you an admin of " + new_ch.getName() + " group";
 			std::cout << "!!!1111" << std::endl;
 			this->_send(usr.getSocket(), to_send);
 		}
@@ -522,20 +523,58 @@ void IRCServer::_OPER(const Message &msg) {
 
 }
 
-void IRCServer::_LIST(const Message &msg) {
-	// Команда: LIST
-	// Параметры: [<channel>{,<channel>} [<server>]]
-	// NO cout channel if it secret and user doesnt have the accses
+void IRCServer::_LIST( const Message &msg, const User &user ) //const
+{
+    std::map<std::string, Channel>::const_iterator  it;
+    std::string                                     buf;
 
-	// if params > 1 - cout 1 channel + topic
-	// CHECK IF MODE IS OK
+    if (utils::toUpper(msg.getCommand()) != "LIST")
+        return ;
+    buf = ":" + _hostname + " 321 " + user.getNickname() + " Channel :Users  Name";
+    _send(user.getSocket(), buf);
+    if (msg.getParamets().size() == 0)
+    {
+        for (it = _channels.begin(); it != _channels.end(); ++it)
+        {
+            const Channel       &channel = it->second;
+            std::stringstream   ss;
 
-	if (this->_channels.size()) {
-		std::cout << "list of channels and their topics:" << std::endl;
-		std::map<std::string, Channel>::iterator ch_it;
-		ch_it = this->_channels.begin();
-		std::cout << ch_it->first << " - " << ch_it->second._topic << std::endl; // GET TOPIC FUNC NEED
-	}
+            ss << channel.getUsers().size();
+            buf = ":"
+                + _hostname
+                + " 322 "
+                + user.getNickname()    + " "
+                + channel.getName()     + " "
+                + ss.str()              + " :"
+                + channel.getTopic();
+            _send(user.getSocket(), buf);
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < msg.getParamets().size(); ++i)
+        {
+            it = _channels.find(msg.getParamets()[i]);
+            
+            if (it == _channels.end())
+                continue ;
+
+            const Channel       &channel = it->second;
+            std::stringstream   ss;
+
+            ss << channel.getUsers().size();
+            buf = ":"
+                + _hostname
+                + " 322 "
+                + user.getNickname()    + " "
+                + channel.getName()     + " "
+                + ss.str()              + " :"
+                + channel.getTopic();
+            _send(user.getSocket(), buf);
+        }
+    }
+    buf = ":" + _hostname + " 323 " + user.getNickname() + " :End of /LIST";
+    _send(user.getSocket(), buf);
 }
 
 void IRCServer::_NAMES(const Message &msg) {
