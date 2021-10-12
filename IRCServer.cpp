@@ -242,12 +242,11 @@ void    IRCServer::_CAP( const Message &msg, User &user )
 
     if (msg.getCommand() != "CAP")
         return ;
-    buf = "CAP * LS :";
-    _send(user.getSocket(), buf);
-    // buf = "CAP REQ :multi-prefix";
-    // _send(user.getSocket(), buf);
-    // buf = "CAP * ACK multi-prefix";
-    // _send(user.getSocket(), buf);
+    if (msg.getParamets().size() > 0 && msg.getParamets()[0] == "LS")
+    {
+        buf = "CAP * LS :";
+        _send(user.getSocket(), buf);
+    }
 }
 
 void    IRCServer::_PASS( const Message &msg, User &user )
