@@ -4,7 +4,7 @@
 IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_port(port),
 	_password(pass),
-    _delimeter("\r\n")
+    _delimeter("\n")
 {
     char    hostname[30];
 
@@ -82,7 +82,7 @@ void IRCServer::start() {
                     _users.insert(myPair);
 
 					// if (connect_fd < 0) ...
-					std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
+					// std::cout << "connect fd " << new_fd << std::endl; // socketi clientov
 
 					// std::cout << GRE << "new client!!\n" << END;
 					if (this->_max_fd < new_fd)
@@ -90,14 +90,14 @@ void IRCServer::start() {
 					FD_SET(new_fd, &this->_client_fds);
 					// main_server.clients.push_back(make_new_client(new_fd)); // make new user!!
 					// std::cout << GRE << "one more joined\n" << END; // add here id - who - add other ..
-                    std::cout << RED << "3" << END << std::endl;
+                    // std::cout << RED << "3" << END << std::endl;
 					// std::string welcomeMsg = "Welcome to our IRC server! \r\n";
 					// send(new_fd, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
 				}
 
 				else {
 
-					std::cout << "inseide else" << std::endl;
+					// std::cout << "inseide else" << std::endl;
 
 					std::string buf;
 
@@ -113,21 +113,24 @@ void IRCServer::start() {
                     }
 
 					Message msg(buf);
+
                     std::multimap<std::string, User>::iterator  it;
-                    
                     it = _users.begin();
+
                     while (it != _users.end() && it->second.getSocket() != i)
                         it++;
                     if (it != _users.end())
                     {
-                        _PASS(msg, it->second);
-                        _PING(msg, it->second);
+						if (msg.getCommand() == "join")
+							this->_JOIN(msg, it->second);
+                        // _PASS(msg, it->second);
+                        // _PING(msg, it->second);
                     }
 
 					// zdes' budet nash UMNIJ RECIEVE //
 
-                    std::cout << "Number of users : " 
-                              << _users.size() + _unloggedUsers.size() << std::endl;
+                    // std::cout << "Number of users : " 
+                    //           << _users.size() + _unloggedUsers.size() << std::endl;
 
 
 					it = _users.begin(); // 
@@ -188,12 +191,12 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             buf       += c_buf;
         }
     }
-    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
-    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
-    std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
-    std::cout << GRE << "msg     : " << END << buf << std::endl;
-    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
+    // std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
+    // std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
+    // std::cout << GRE << "socket  : " << END << sockfd << std::endl;
+    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
+    // std::cout << GRE << "msg     : " << END << buf << std::endl;
+    // std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (bytes == -1 ? false : true);
 }
@@ -310,43 +313,61 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 	// JOIN <channel>{, <channel>}[<key>{, <key>}
 	// 4.2.1 examples
-	// 1. msg.getParamets()[0] - eto nazvanie gruppi?
+	usr.setNickname("ebanat");
+	Channel test_ch("klub");
+	this->_channels.insert(std::make_pair("klub", test_ch));
 
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
-	
-	if (ch_it != this->_channels.end()) {
-		// gruppa est' -> nado join
+
+
+	// # and &
+	for (int i = 0; i < msg.getParamets().size(); i++) {
+
+		std::map<std::string, Channel>::iterator ch_it;
+		ch_it = this->_channels.find(msg.getParamets()[i]); // najti group
+
+		if (ch_it != this->_channels.end()) {
+
+			std::cout << "group exist!" << std::endl;
+			// gruppa est' -> nado join
+			
+			// Если установлен пароль -> должен быть верным.
+			// buff >> pass
+			// if pass != get_group_pass -> invalid pass
+
+			// check mode of channnel
+
+			// check if he dosnt banned in channel
+
+			// if user has no more than 10 channels
+			// (405 ERR_TOOMANYCHANNELS)
+
+			ch_it->second.addUser(usr);
 		
-		// Если установлен пароль -> должен быть верным.
-		// buff >> pass
-		// if pass != get_group_pass -> invalid pass
+			// if joined user -> send msg about new user to all
+				// _PRIVMSG TO ALL USER IN GROUP
 
-		// check mode of channnel
+			// and Если JOIN прошла хорошо, пользователь получает топик канала
+			ch_it->second.channel_info();	
+		
+		}
+		else {
 
-		// check if he dosnt banned in channel
+			std::cout << "group creating..." << std::endl;
+			if (usr._nickname == "") // no name user
+				return;
 
-		// if user has no more than 10 channels
-		// (405 ERR_TOOMANYCHANNELS)
+			Channel new_ch(msg.getParamets()[i]);
+			this->_channels.insert(std::make_pair(new_ch._name, new_ch));
+			new_ch.addUser(usr);
+			new_ch.addChop(usr);
 
-		ch_it->second.addUser(usr);
-	
-		// if joined user -> send msg about new user to all
-			// _PRIVMSG TO ALL USER IN GROUP
+			// new_ch.channel_info();
+			// info to server that usr is chop now to server
 
-		// and Если JOIN прошла хорошо, пользователь получает топик канала
-		ch_it->second.channel_info();	
-	
-	}
-	else {
-
-		Channel new_ch(msg.getParamets()[0]);
-		this->_channels.insert(std::make_pair(new_ch._name, new_ch));
-		// send msg that new channel is created
-		new_ch.addUser(usr);
-		new_ch.addChop(usr);
-		// std::cout to socket: name .. - is chop now and to server
-
+			std::string to_send = "now you an admin of " + new_ch._name + " group";
+			std::cout << "!!!1111" << std::endl;
+			this->_send(usr.getSocket(), to_send);
+		}
 	}
 }
 
@@ -450,7 +471,6 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 	// else
 		// no channel
 }
-
 
 void IRCServer::_INVITE(const Message &msg) { // add USER
 

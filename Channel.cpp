@@ -57,7 +57,7 @@ void Channel::channel_info() {
 	std::cout << "list of users: " << std::endl;
 	std::map<std::string, User*>::iterator iter = this->_users.begin();
 	for (; iter != this->_users.end(); iter++) {
-		std::cout << "nickname: " <<  iter->first << " socket: " << iter->second->_socket << std::endl;
+		std::cout << "nickname: " <<  iter->first << ", socket: " << iter->second->_socket << std::endl;
 	}
 	
 	// list of chops
