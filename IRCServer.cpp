@@ -254,7 +254,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-
+    
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
