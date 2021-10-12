@@ -4,8 +4,10 @@ Message::Message() {}
 
 Message::~Message() {}
 
-Message::Message(std::string str) {
-    this->_parse(str);
+Message::Message(std::string str, const User &usr) {
+    this->_isPrefix = false;
+    this->_isCommand = false;
+    this->_parse(str, usr);
 }
 
 const std::string				&Message::getCommand() const {
@@ -16,23 +18,32 @@ const std::vector<std::string>	&Message::getParamets() const {
     return this->_parameters;
 }
 
-void Message::_parse(std::string str) {
+const std::string				&Message::getPrefix() const {
+    return this->_prefix;
+}
+
+void Message::_parse(std::string str, const User &usr) {
     std::vector<std::string> vec_sep_space; 
     std::vector<std::string> vec_sep_colon;
 
+    this->_prefix = usr.getNickname();
+
+    if (str[0] == ':')
+        this->_isPrefix = true;
+
     if (_checkColon(str)) {
         std::string buf_str;
-
+		
         vec_sep_colon = _split(str, ':');
         for (int i = 1; i < vec_sep_colon.size(); ++i) 
             buf_str += vec_sep_colon[i];
         vec_sep_space = _split(vec_sep_colon[0], ' ');
-        _parseUtility(vec_sep_space);
+        _parseUtility(vec_sep_space, usr);
         this->_parameters.push_back(buf_str);
     }
     else {
         vec_sep_space = _split(str, ' ');
-        _parseUtility(vec_sep_space);
+        _parseUtility(vec_sep_space, usr);
     }
 }
 
@@ -64,13 +75,18 @@ bool Message::_checkComma(const std::string &str) {
     return false;
 }
 
-void Message::_parseUtility(std::vector<std::string> vec_sep_space) {
+void Message::_parseUtility(std::vector<std::string> vec_sep_space, const User &usr) {
     std::vector<std::string> vec_sep_comma;
      
     if (!vec_sep_space.empty()) {
         for (int i = 0; i != vec_sep_space.size(); ++i) {
-            if (i == 0)
-                this->_command = vec_sep_space[i]; 
+            if (_isPrefix && i == 0) {
+                this->_prefix = vec_sep_space[i];
+            }
+            else if (!_isCommand) {
+                this->_command = vec_sep_space[i];
+                _isCommand = true;
+            }
             else {
                 if (_checkComma(vec_sep_space[i])) {
                     vec_sep_comma = _split(vec_sep_space[i], ',');
@@ -86,6 +102,8 @@ void Message::_parseUtility(std::vector<std::string> vec_sep_space) {
 
 void Message::_printTest() {
     std::cout << std::endl;
+
+    std::cout << "PREFIX: " << std::endl << this->_prefix << std::endl;
 
     std::cout << "CMD: " << std::endl << this->_command << std::endl;
     

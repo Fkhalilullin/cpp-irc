@@ -32,6 +32,7 @@ class User {
 		bool	isLogged    () const;
 		bool	isPassworded() const;
 
+		const std::string getNickname() const;
 };
 
 

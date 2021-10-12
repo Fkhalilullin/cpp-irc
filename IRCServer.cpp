@@ -112,7 +112,8 @@ void IRCServer::start() {
                         _removeUser(i);
                     }
 
-					Message msg(buf);
+					// Message msg(buf);
+
                     std::multimap<std::string, User>::iterator  it;
                     
                     it = _users.begin();
@@ -120,8 +121,8 @@ void IRCServer::start() {
                         it++;
                     if (it != _users.end())
                     {
-                        _PASS(msg, it->second);
-                        _PING(msg, it->second);
+                        // _PASS(msg, it->second);
+                        // _PING(msg, it->second);
                     }
 
 					// zdes' budet nash UMNIJ RECIEVE //

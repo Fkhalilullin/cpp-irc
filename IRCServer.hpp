@@ -67,13 +67,13 @@ public:
     // void        stop ();
 
     private:
-        bool    _recv      ( int sockfd,       std::string &buf ) const;
-        bool    _send      ( int sockfd, const std::string &buf ) const;
-        void    _exec      ( const Message &msg );
-        void    _removeUser( int sockfd         );
+        bool    _recv       ( int sockfd,       std::string &buf ) const;
+        bool    _send       ( int sockfd, const std::string &buf ) const;
+        void    _exec       ( const Message &msg );
+        void    _removeUser ( int sockfd         );
 
         // Begin CMD
-        void    _PRIVMSG(const Message &msg, const User &usr);
+        void    _PRIVMSG ( const Message &msg, const User &usr );
         void    _PASS      ( const Message &msg, User &user );
         void    _PING      ( const Message &msg, User &user );
 };
