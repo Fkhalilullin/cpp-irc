@@ -31,9 +31,16 @@ int main(int argc, char *argv[]) {
 
 	unsigned int port = std::atoi(argv[1]);
 	std::string pass(argv[2]);
-	IRCServer serv(port, pass);
-	serv.start();
 
+	try
+	{
+		IRCServer serv(port, pass);
+		serv.start();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << RED << e.what() << END << std::endl;
+	}
 	return 0;
 }
 

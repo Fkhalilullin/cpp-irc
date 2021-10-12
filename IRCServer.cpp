@@ -92,8 +92,11 @@ void IRCServer::start()
                 _CAP (msg, it->second);
                 _PASS(msg, it->second);
                 _PING(msg, it->second);
-                _NICK(msg, it->second);
-                _USER(msg, it->second);
+                if (it->second.isPassworded())
+                {
+                    _NICK(msg, it->second);
+                    _USER(msg, it->second);
+                }
                 // _send(i, std::string(":nforce2 PRIVMSG #chan2 :hello!"));
             }
             std::cout << "Number of users : " 
@@ -269,6 +272,14 @@ void    IRCServer::_PASS( const Message &msg, User &user )
     }
     if (msg.getParamets()[0] == _password)
         user.switchPassword();
+    else
+    {
+        if (user.getNickname().empty())
+            buf = "464 <user> :Password incorrect";
+        else
+            buf = "464 " + user.getNickname() + " :Password incorrect";
+        _send(user.getSocket(), buf);
+    }
 }
 
 void    IRCServer::_NICK( const Message &msg, User &user )
