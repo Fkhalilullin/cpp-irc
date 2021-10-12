@@ -85,12 +85,27 @@ class IRCServer
         bool    _isCorrectNick( const std::string &nick );
 
         // Begin CMD
+
+		// NIZHEN EXEC !
         void    _PRIVMSG(const Message &msg, const User &usr);
         void    _CAP       ( const Message &msg, User &user );
         void    _PASS      ( const Message &msg, User &user );
         void    _NICK      ( const Message &msg, User &user );
         void    _USER      ( const Message &msg, User &user );
-        void    _PING      ( const Message &msg, User &user );
+
+		void    _PING      ( const Message &msg, User &user );
+
+		void _NOTICE(const Message &msg, const User &usr); // k
+		void _JOIN(const Message &msg, User &usr); // bez const	// k
+		void _PART(const Message &msg, const User &usr); // k
+		void _OPER(const Message &msg); // k
+		void _LIST(const Message &msg); // k
+		void _NAMES(const Message &msg); // k
+
+        // QUIT cmd -? -> JUST exit from server?
+
+        void _KICK(const Message &msg, const User &usr);
+        void _INVITE(const Message &msg);
 };
 
 #endif
