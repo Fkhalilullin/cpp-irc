@@ -4,9 +4,9 @@ Channel::Channel() {}
 
 Channel::~Channel() {}
 
-Channel::Channel(std::string ch_name) {
+Channel::Channel(std::string name) {
 
-		this->_name = ch_name;
+		this->_name = name;
 		this->_limit_users = 10;
 		this->_topic = "default";
 		// this->_pass = "123";
@@ -99,7 +99,19 @@ const std::string &Channel::getTopic() const {
 	return this->_topic;
 }
 
-void Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
+bool	Channel::setName (std::string name)
+{
+	// checking the name for validity
+	_name = name;
+	return (true);
+}
+
+void	Channel::setTopic(std::string topic)
+{
+	_topic = topic;
+}
+
+void	Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
 
 	// this->_ban_list.push_back(rem_name); replace ti to "ban user"
 	

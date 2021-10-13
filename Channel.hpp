@@ -13,31 +13,34 @@
 
 
 class Channel {
-	public: // make private
+	private: // make private
 		typedef std::map<std::string, User*> userMap;
+		std::string	_name;
+		std::string	_topic;
+		userMap		_users;
+		userMap		_chops;
 
 		
 	private:
 		Channel();
 
 	public:
-		Channel(std::string ch_name);
+		Channel(std::string name);
 		~Channel();
-
-		std::string _name; // ok
-		std::string _topic; //  ok
-		userMap _users; // ok 
-		userMap _chops; // ok
 
 		void addUser(User &_user); // ok
 		void addChop(User &_user); // ok 
 		void removeUser(std::string _nickname); // ok
 		// REMOVE USER != BAN USER -> make func ban user
 
-		const userMap		&getUsers() const; // ok
-		const userMap		&getChops() const; // ok
-		const std::string	&getName() const;
-		const std::string	&getTopic() const;
+		const std::string	& getName () const;
+		const std::string	& getTopic() const;
+		const userMap		& getUsers() const;
+		const userMap		& getChops() const;
+		
+		bool				  setName ( std::string name  ); // checking the name for validity
+		void				  setTopic( std::string topic );
+
 
 		// NEW FUNCS //
 		int _limit_users; // ok // make it const
