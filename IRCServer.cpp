@@ -219,14 +219,39 @@ void    IRCServer::_addUser(const User &user)
     _users.insert(tmp);
 }
 
-void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
+void IRCServer::_PRIVMSG(const Message &msg, const User &usr) { //ERRORS: 404 
 	std::multimap<std::string, User>::iterator us_it;
     std::map<std::string, Channel>::iterator ch_it;
+    std::string buf;
+
+    if (msg.getCommand() != "PRIVMSG")
+        return ;
+
+    if (msg.getParamets().empty()) {
+        buf = "411 :No recipient given PRIVMSG";
+        _send(usr.getSocket(), buf);
+        return ; 
+    }
+
+    if(msg.getParamets().size() == 1) {
+        buf = "412 :No text to send";
+        _send(usr.getSocket(), buf);
+        return ; 
+    }
+
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+            if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) {
+                buf = "407: " +  msg.getParamets()[i] + " :Duplicate recipients. No message delivered";
+                us_it = this->_users.find(msg.getParamets()[i]);
+                _send(us_it->second.getSocket(), buf);
+                return ;
+            }
+        }
+    }
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-    if (msg.getCommand() != "PRIVMSG")
-        return ;
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
@@ -252,8 +277,11 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 		        _send(us_ch_it->second->getSocket(), message);
             }
         }
-        // else
-            // _send()
+        else{
+            buf = "401: " + usr.getNickname() + " :No such nick/channel";
+            _send(usr.getSocket(), buf);
+            return ; 
+        }
 	}
 }
 
