@@ -95,6 +95,10 @@ const std::string &Channel::getName() const {
 	return this->_name;
 }
 
+const std::string &Channel::getTopic() const {
+	return this->_topic;
+}
+
 void Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
 
 	// this->_ban_list.push_back(rem_name); replace ti to "ban user"

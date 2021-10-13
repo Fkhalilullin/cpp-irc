@@ -37,6 +37,7 @@ class Channel {
 		const userMap		&getUsers() const; // ok
 		const userMap		&getChops() const; // ok
 		const std::string	&getName() const;
+		const std::string	&getTopic() const;
 
 		// NEW FUNCS //
 		int _limit_users; // ok // make it const
@@ -52,7 +53,6 @@ class Channel {
 		// add to user -> get username // -
 
 		// ПРОВЕРКА ИМеНИ КАНАЛА С СУЩЕСТВУЮЩИМИ ЮЗЕРАМИ
-
 
 		std::string _pass;
 		// make set_pass 
