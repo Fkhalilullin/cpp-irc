@@ -62,6 +62,7 @@ void IRCServer::start()
 	fd_set  select_fds; // just for copy
 	select_fds = _client_fds;
 
+    std::cout << GRE << "Server is started..." << END << std::endl;
 	while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
     {
 		for (int i = 3; i < _max_fd + 1; i++)

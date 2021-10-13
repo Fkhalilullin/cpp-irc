@@ -61,7 +61,7 @@ void    Client::run()
     
     buf = "PASS 1234"                  + std::string("\r\n")
         + "NICK " + std::string(_nick) + std::string("\r\n")
-        + "USER * * * *"               + std::string("\r\n");
+        + "USER myusernaaame * * *"               + std::string("\r\n");
     _send(buf);
     int pid = fork();
     if (pid < 0)
@@ -138,6 +138,9 @@ bool    Client::_recv( std::string &buf ) const
               << (char)8 << (char)8 << (char)8
               << "💌 \""<< buf << "\"" << END << std::endl;
     std::cerr << BLU << "➡️  " << END;
+    // std::cerr << "===" << buf.find(std::string("PING")) << std::endl;
+    if (buf.find("PING") != -1)
+        _send(std::string(":") + _nick + std::string(" PONG ") + _nick);
     return (bytes == -1 ? false : true);
 }
 
