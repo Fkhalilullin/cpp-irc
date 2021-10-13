@@ -4,23 +4,16 @@ Message::Message() {}
 
 Message::~Message() {}
 
-Message::Message(std::string str, const User &usr) {
-    this->_isPrefix = false;
-    this->_isCommand = false;
+Message::Message(std::string str, const User &usr) 
+    : _isPrefix(false), _isCommand(false) {
     this->_parse(str, usr);
 }
 
-const std::string				&Message::getCommand() const {
-    return this->_command;
-}
+const std::string				&Message::getCommand() const { return this->_command; }
 
-const std::vector<std::string>	&Message::getParamets() const {
-    return this->_parameters;
-}
+const std::vector<std::string>	&Message::getParamets() const { return this->_parameters; }
 
-const std::string				&Message::getPrefix() const {
-    return this->_prefix;
-}
+const std::string				&Message::getPrefix() const { return this->_prefix; }
 
 void Message::_parse(std::string str, const User &usr) {
     std::vector<std::string> vec_sep_space; 
