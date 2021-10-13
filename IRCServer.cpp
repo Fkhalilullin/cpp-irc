@@ -225,20 +225,35 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-    
+    if (msg.getCommand() != "PRIVMSG")
+        return ;
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
 	    if (us_it != this->_users.end()) {
-            std::string message(":" + msg.getPrefix() + " PRIVMSG " + us_it->second.getNickname() + " :" + msg.getParamets().back()); 
-            std::cout << message << std::endl;
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + us_it->second.getNickname() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+
 		    _send(us_it->second.getSocket(), message);
         }
         else if (ch_it != this->_channels.end()) {
-            std::string message(":" + msg.getPrefix() + " PRIVMSG " + ch_it->second.getName() + " :" + msg.getParamets().back()); 
-            std::cout << message << std::endl;
-		    _send(us_it->second.getSocket(), message);
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + ch_it->second.getName() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+            std::map<std::string, User*>::const_iterator us_ch_it;
+
+            us_ch_it = ch_it->second.getUsers().begin();
+            for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
+		        _send(us_ch_it->second->getSocket(), message);
+            }
         }
+        // else
+            // _send()
 	}
 }
 
