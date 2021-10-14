@@ -232,12 +232,12 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     }
 }
 
-void IRCServer::_PRIVMSG(const Message &msg, const User &usr) { //404
+void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	std::multimap<std::string, User>::iterator us_it;
     std::map<std::string, Channel>::iterator ch_it;
     std::string buf;
 
-    if (msg.getCommand() != "PRIVMSG")
+    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
         return ;
 
     if (msg.getParamets().empty()) {
@@ -457,8 +457,58 @@ void    IRCServer::_PING( const Message &msg, const User &user ) const
 }
 
 void IRCServer::_NOTICE(const Message &msg, const User &usr) {
-	// ne mozhet bit; gruppoj
-	// is the same as PRIVMSG ? without sendng response to serv?
+	std::multimap<std::string, User>::iterator us_it;
+    std::map<std::string, Channel>::iterator ch_it;
+    std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
+        return ;
+
+    if (msg.getParamets().empty()) {
+        return ; 
+    }
+
+    if(msg.getParamets().size() == 1) {
+        return ; 
+    }
+
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+            if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) 
+                return ;
+        }
+    }
+
+	us_it = this->_users.begin();
+    ch_it = this->_channels.begin();
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+	    us_it = this->_users.find(msg.getParamets()[i]);
+        ch_it = this->_channels.find(msg.getParamets()[i]);
+	    if (us_it != this->_users.end()) {
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + us_it->second.getNickname() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+
+		    _send(us_it->second.getSocket(), message);
+        }
+        else if (ch_it != this->_channels.end()) {
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + ch_it->second.getName() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+            std::map<std::string, User*>::const_iterator us_ch_it;
+
+            us_ch_it = ch_it->second.getUsers().begin();
+            for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
+		        _send(us_ch_it->second->getSocket(), message);
+            }
+        }
+        else
+            return ; 
+	}
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
