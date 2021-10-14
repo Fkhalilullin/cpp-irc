@@ -93,12 +93,12 @@ class IRCServer
         void    _USER   ( const Message &msg, User &user );
 
 		void    _PING   ( const Message &msg, const User &user ) const;
+        void    _OPER   ( const Message &msg, const User &user );
 
 		void    _NOTICE (const Message &msg, const User &usr); // k
 		void    _JOIN   (const Message &msg, User &usr); // bez const	// k
 		void    _PART   (const Message &msg, const User &usr); // k
-		void    _OPER   (const Message &msg); // k
-		void    _LIST   (const Message &msg, const User &user); //const;
+		void    _LIST   (const Message &msg, const User &user) const;
 		void    _NAMES  (const Message &msg); // k
 
         // QUIT cmd -? -> JUST exit from server?
