@@ -4,7 +4,7 @@
 IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_port(port),
 	_password(pass),
-    _delimeter("\n")
+    _delimeter("\r\n")
 {
     char    hostname[30];
 
@@ -62,6 +62,7 @@ void IRCServer::start()
 	fd_set  select_fds; // just for copy
 	select_fds = _client_fds;
 
+    std::cout << GRE << "Server is started..." << END << std::endl;
 	while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
     {
 		for (int i = 3; i < _max_fd + 1; i++)
@@ -153,6 +154,8 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
     int         bytesLeft;
     int     	bytes;
 
+    if (buf.empty())
+        return (false);
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
     bytesLeft = buf_delim.length();
@@ -213,7 +216,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         return ; // no such user
     
     Message msg(buf, it->second);
-    User &user = it->second;
+    User    &user = it->second;
 
     // _CAP(msg, user);
     // _PASS(msg, user);
@@ -227,33 +230,74 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     // {
         if (msg.getCommand() == "PRIVMSG")
             _PRIVMSG(msg, user);
-        if (msg.getCommand() == "join" || msg.getCommand() == "JOIN") // upper
+        if (msg.getCommand() == "join")
             _JOIN(msg, user);
-        if (msg.getCommand() == "list") // upper
-            _LIST(msg, user);
-        // _LIST(msg, user);
-    // }
+        _LIST(msg, user);
+        _OPER(msg, user);
 }
 
 void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	std::multimap<std::string, User>::iterator us_it;
-    std::map<std::string, Channel>::iterator ch_it;
+	std::map<std::string, Channel>::iterator ch_it;
+	std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
+        return ;
+
+    if (msg.getParamets().empty()) {
+        buf = "411 :No recipient given PRIVMSG";
+        _send(usr.getSocket(), buf);
+        return ; 
+    }
+
+    if(msg.getParamets().size() == 1) {
+        buf = "412 :No text to send";
+        _send(usr.getSocket(), buf);
+        return ; 
+    }
+
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+            if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) {
+                buf = "407: " +  msg.getParamets()[i] + " :Duplicate recipients. No message delivered";
+                us_it = this->_users.find(msg.getParamets()[i]);
+                _send(us_it->second.getSocket(), buf);
+                return ;
+            }
+        }
+    }
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
 	    if (us_it != this->_users.end()) {
-            std::string message(":" + msg.getPrefix() + " PRIVMSG " + us_it->second.getNickname() + " :" + msg.getParamets().back()); 
-            std::cout << message << std::endl;
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + us_it->second.getNickname() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+
 		    _send(us_it->second.getSocket(), message);
         }
         else if (ch_it != this->_channels.end()) {
-            std::string message(":" + msg.getPrefix() + " PRIVMSG " + ch_it->second.getName() + " :" + msg.getParamets().back()); 
-            std::cout << message << std::endl;
-		    _send(us_it->second.getSocket(), message);
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + ch_it->second.getName() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+            std::map<std::string, User*>::const_iterator us_ch_it;
+
+            us_ch_it = ch_it->second.getUsers().begin();
+            for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
+		        _send(us_ch_it->second->getSocket(), message);
+            }
+        }
+        else{
+            buf = "401: " + msg.getParamets()[i] + " :No such nick/channel";
+            _send(usr.getSocket(), buf);
+            return ; 
         }
 	}
 }
@@ -417,8 +461,58 @@ void    IRCServer::_PING( const Message &msg, const User &user ) const
 }
 
 void IRCServer::_NOTICE(const Message &msg, const User &usr) {
-	// ne mozhet bit; gruppoj
-	// is the same as PRIVMSG ? without sendng response to serv?
+	std::multimap<std::string, User>::iterator us_it;
+    std::map<std::string, Channel>::iterator ch_it;
+    std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
+        return ;
+
+    if (msg.getParamets().empty()) {
+        return ; 
+    }
+
+    if(msg.getParamets().size() == 1) {
+        return ; 
+    }
+
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+            if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) 
+                return ;
+        }
+    }
+
+	us_it = this->_users.begin();
+    ch_it = this->_channels.begin();
+    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+	    us_it = this->_users.find(msg.getParamets()[i]);
+        ch_it = this->_channels.find(msg.getParamets()[i]);
+	    if (us_it != this->_users.end()) {
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + us_it->second.getNickname() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+
+		    _send(us_it->second.getSocket(), message);
+        }
+        else if (ch_it != this->_channels.end()) {
+            std::string message(":" + msg.getPrefix() 
+                                    + " PRIVMSG " 
+                                    + ch_it->second.getName() 
+                                    + " :" 
+                                    + msg.getParamets().back()); 
+            std::map<std::string, User*>::const_iterator us_ch_it;
+
+            us_ch_it = ch_it->second.getUsers().begin();
+            for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
+		        _send(us_ch_it->second->getSocket(), message);
+            }
+        }
+        else
+            return ; 
+	}
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
@@ -624,30 +718,34 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	}
 }
 
-void IRCServer::_OPER(const Message &msg) {
-	// Команда: OPER
-	// Параметры: <user> <password>
+void    IRCServer::_OPER( const Message &msg, const User &user )
+{
+    std::string                                 buf;
+    std::multimap<std::string, User>::iterator  it;
 
-	// msg.getParamets()[0] - eto user?
-	// msg.getParamets()[1] - eto pass?
-	// pass == with server pass?
-
-	std::string str_user = msg.getParamets()[0];
-	std::multimap<std::string, User>::iterator us_it;
-
-	us_it = this->_users.find(str_user); // najti group
-	
-	if (_users.count(str_user) > 1)
-		std::cout << "more one user with this name" << std::endl;
-		// ERR
-
-	if (us_it != this->_users.end())
-		this->_operators.insert(std::make_pair(str_user, &us_it->second));
-	// notice server that str_name is serv operator now ..
-
+    if (utils::toUpper(msg.getCommand()) != "OPER")
+        return ;
+    if (msg.getParamets().size() < 2)
+        buf = ":" + _hostname + " 461 " + user.getNickname() + " OPER :Not enough parameters";
+    else if (msg.getParamets()[0] != user.getNickname())
+        buf = ":" + _hostname + " 491 " + user.getNickname() + " :No O-lines for your host";
+    else if (msg.getParamets()[1] != _password)
+        buf = ":" + _hostname + " 464 " + user.getNickname() + " :Password incorrect";
+    else
+    {
+        it = _users.find(user.getNickname());
+        if (it != _users.end())
+        {
+            _operators.insert(std::make_pair(user.getNickname(), &it->second));
+            buf = ":" + _hostname + " 381 " + user.getNickname() + " :You are now an IRC operator";
+        }
+        else
+            std::cerr << RED << "Something went wrong : OPER : No such user" << END << std::endl;
+    }
+    _send(user.getSocket(), buf);
 }
 
-void IRCServer::_LIST( const Message &msg, const User &user ) //const
+void IRCServer::_LIST( const Message &msg, const User &user ) const
 {
     std::map<std::string, Channel>::const_iterator  it;
     std::string                                     buf;
@@ -701,23 +799,44 @@ void IRCServer::_LIST( const Message &msg, const User &user ) //const
     _send(user.getSocket(), buf);
 }
 
-void IRCServer::_NAMES(const Message &msg) {
-	// Команда: NAMES
-	// Параметры: [<channel>{,<channel>}]
-	// esli NAMES -> to vse channels -> users
-	// elsi names + chanlel -> vse users in channel
-	// Имена каналов, которые они могут видеть это те, которые не приватные
-	// (+p) или секретные (+s) // CHECK MODE
+void IRCServer::_NAMES(const Message &msg, const User &user) {
 
-	// all channels
-	if (this->_channels.size()) {
-		std::map<std::string, Channel>::iterator ch_it;
-		ch_it = this->_channels.begin();
-		
-		// std::map<std::string, User*>::iterator us_it; // for map of users in channel
-		// for (; ch_it != this->_channels.end(); ch_it++)
-			// ch_it->second._users; // make method show only users in this channel
-		
+    std::map<std::string, Channel>::iterator ch_it;
+	std::string message;
+	std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "NAMES")
+        return ;
+	
+	ch_it = _channels.begin();
+	if (!msg.getParamets().empty()) {
+		for (int i = 0; i < msg.getParamets().size(); ++i) {
+			ch_it = this->_channels.find(msg.getParamets()[i]);
+			
+			if (ch_it != _channels.end()) {
+				std::map<std::string, User*>::const_iterator ch_us_it; 
+				std::map<std::string, User*>::const_iterator ch_chops_it;
+				ch_us_it = ch_it->second.getUsers().begin();
+				message = "353 " + user.getNickname() 
+								 + " = "
+								 + ch_it->second.getName() 
+								 + " ";
+				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
+					ch_chops_it = ch_it->second.getChops().find(ch_us_it->second->getNickname());
+					if (ch_chops_it != ch_it->second.getChops().end())
+						buf += "@" + ch_us_it->second->getNickname() + " ";
+					else
+						buf += ch_us_it->second->getNickname() + " ";
+				}
+				_send(user.getSocket(), message + buf);
+				
+			}
+			message = "366 "  + user.getNickname() 
+								  + " "
+								  + ch_it->second.getName() 
+								  + " :End of /NAMES list";
+			_send(user.getSocket(), message);
+		}
 	}
 }
 
