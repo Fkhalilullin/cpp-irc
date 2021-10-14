@@ -218,22 +218,25 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    &user = it->second;
 
-    // _CAP(msg, user);
-    // _PASS(msg, user);
-    // _PING(msg, user);
-    // if (user.isPassworded())
-    // {
+    _CAP(msg, user);
+    _PASS(msg, user);
+    _PING(msg, user);
+    if (user.isPassworded())
+    {
         _NICK(msg, user);
-        // _USER(msg, user);
-    // }
-    // if (user.isPassworded() && user.isLogged())
-    // {
+        _USER(msg, user);
+    }
+    if (user.isPassworded() && user.isLogged())
+    {
         if (msg.getCommand() == "PRIVMSG")
             _PRIVMSG(msg, user);
         if (msg.getCommand() == "join")
             _JOIN(msg, user);
+
         _LIST(msg, user);
         _OPER(msg, user);
+        _NAMES(msg, user);
+    }
 }
 
 void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
