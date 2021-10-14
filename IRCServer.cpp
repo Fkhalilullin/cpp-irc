@@ -137,12 +137,12 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             buf       += c_buf;
         }
     }
-    // std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
-    // std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
-    // std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    // // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
-    // std::cout << GRE << "msg     : " << END << buf << std::endl;
-    // std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
+    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
+    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
+    std::cout << GRE << "socket  : " << END << sockfd << std::endl;
+    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
+    std::cout << GRE << "msg     : " << END << buf << std::endl;
+    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (bytes == -1 ? false : true);
 }
@@ -170,12 +170,12 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
         total += bytes;
         bytesLeft -= bytes;
     }
-    // std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
-    // std::cout << YEL << "------------SENDED------------" << END << std::endl;
-    // std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
-    // std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
-    // std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
+    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
+    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
+    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
 }
 
@@ -218,7 +218,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    &user = it->second;
 
-    _CAP(msg, user);
+    _CAP (msg, user);
     _PASS(msg, user);
     _PING(msg, user);
     if (user.isPassworded())
@@ -377,7 +377,7 @@ void    IRCServer::_NICK( const Message &msg, User &user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "NICK" || msg.getCommand() != "nick") // kostya changed
+    if (msg.getCommand() != "NICK")
         return ;
     if (msg.getParamets().size() == 0)
     {
