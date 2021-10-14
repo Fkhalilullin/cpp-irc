@@ -306,7 +306,7 @@ void    IRCServer::_CAP( const Message &msg, const User &user ) const
 {
     std::string	buf;
 
-    if (msg.getCommand() != "CAP")
+    if (utils::toUpper(msg.getCommand()) != "CAP")
         return ;
     if (msg.getParamets().size() > 0 && msg.getParamets()[0] == "LS")
     {
@@ -319,7 +319,7 @@ void    IRCServer::_PASS( const Message &msg, User &user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "PASS")
+    if (utils::toUpper(msg.getCommand()) != "PASS")
         return ;
     if (user.isPassworded())
     {
@@ -374,7 +374,7 @@ void    IRCServer::_NICK( const Message &msg, User **user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "NICK")
+    if (utils::toUpper(msg.getCommand()) != "NICK")
         return ;
     if (msg.getParamets().size() == 0)
     {
@@ -412,7 +412,7 @@ void    IRCServer::_USER( const Message &msg, User &user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "USER")
+    if (utils::toUpper(msg.getCommand()) != "USER")
         return ;
     if (msg.getParamets().size() < 4)
     {
@@ -455,7 +455,7 @@ void    IRCServer::_PING( const Message &msg, const User &user ) const
 {
     std::string	buf;
 
-    if (msg.getCommand() != "PING")
+    if (utils::toUpper(msg.getCommand()) != "PING")
         return ;
     buf = "PONG " + _hostname;
     _send(user.getSocket(), buf);
@@ -466,7 +466,7 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
     std::map<std::string, Channel>::iterator ch_it;
     std::string buf;
 
-    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
+    if (utils::toUpper(msg.getCommand()) != "NOTICE")
         return ;
 
     if (msg.getParamets().empty()) {
@@ -517,10 +517,8 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
-	usr.setNickname("boy"); // to del
-
-    if (utils::toUpper(msg.getCommand()) != "JOIN")
-        return;
+	if (utils::toUpper(msg.getCommand()) != "JOIN")
+        return ;
 
     if (msg.getParamets().empty()) {
 		std::cout << "461 " << ":Not enough parameters" << std::endl;
@@ -706,6 +704,8 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	// PART #twilight_zone // # is ok?
 
 	// loop po vsem channels -> delete user//
+    if (utils::toUpper(msg.getCommand()) != "PART")
+        return ;
 
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
@@ -848,6 +848,9 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 	std::string str_channel = msg.getParamets()[0]; // true??
 	std::string str_user = msg.getParamets()[1]; // true??
 
+    if (utils::toUpper(msg.getCommand()) != "KICK")
+        return ;
+
 	// channel exists?
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it = this->_channels.begin();
@@ -870,6 +873,8 @@ void IRCServer::_INVITE(const Message &msg) { // add USER
 	std::string str_channel = msg.getParamets()[0]; // true??
 	std::string str_user = msg.getParamets()[1]; // true??
 
+    if (utils::toUpper(msg.getCommand()) != "INVITE")
+        return ;
 	// 1. check if client who invites new user -> is choop in channel
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it =  this->_channels.find(str_channel);
