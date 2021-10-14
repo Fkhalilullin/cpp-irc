@@ -99,7 +99,7 @@ class IRCServer
 		void    _PART   (const Message &msg, const User &usr); // k
 		void    _OPER   (const Message &msg); // k
 		void    _LIST   (const Message &msg, const User &user); //const;
-		void    _NAMES  (const Message &msg); // k
+		void    _NAMES  (const Message &msg, const User &user); // k
 
         // QUIT cmd -? -> JUST exit from server?
 
