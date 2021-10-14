@@ -291,7 +291,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
             }
         }
         else{
-            buf = "401: " + usr.getNickname() + " :No such nick/channel";
+            buf = "401: " + msg.getParamets()[i] + " :No such nick/channel";
             _send(usr.getSocket(), buf);
             return ; 
         }
