@@ -220,7 +220,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     // _PING(msg, user);
     // if (user.isPassworded())
     // {
-        // _NICK(msg, user);
+        _NICK(msg, user);
         // _USER(msg, user);
     // }
     // if (user.isPassworded() && user.isLogged())
@@ -475,123 +475,132 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	}
 
 	for (int i = 0; i < params.size(); i++) {
-
 		std::string tmp_group = params[i];
-		std::cout << GRE << "param of group: " << tmp_group << std::endl;
 
 		std::map<std::string, Channel>::iterator ch_it;
-		ch_it = this->_channels.find(tmp_group); // searching group
+		ch_it = this->_channels.find(tmp_group);
 
-		if (ch_it != this->_channels.end()) { // first var
+		if (ch_it != this->_channels.end()) { // finded group
 
-            std::cout << RED << "finded " << ch_it->first << END << std::endl;
-	// 		// proverit' tam li on / mphet uzhe est'
-	// 		std::cout << "group exist!" << std::endl;
+		std::cout << YEL << "group exists\n" << END;
 
-    //         try { // maybe incorrect
-    //             passwords.at(i);
-    //             if (ch_it->second._pass == passwords[i])
-    //                 std::cout << "pass is ok" << std::endl;
-    //             else {
-    //                 std::cout << "pass empty?" << std::endl;
-    //                 // return;
-    //             }
-    //         }
-    //         catch( ... ) {
-    //             std::cout << "pass epmty?" << std::endl;
-    //             // send errro to user//
-    //             // return;
-    //         }
-            
-    //         std::cout << GRE << "after else" << END << std::endl; // del
-            
-    //         std::map<std::string, User*>::const_iterator user_search_it;
-	// 		user_search_it = ch_it->second.getUsers().find(usr.getNickname());
-	// 		if (user_search_it != ch_it->second.getUsers().end()) {
-	// 			std::cout <<  GRE << "user already in group" << END << std::endl;
-	// 			// the same info to user
-	// 			return;
-	// 		}
+        std::cout << "PASS BEFORE CHECKING " << ch_it->second._pass << "    " << std::endl;
+        
+        
+        try { // maybe incorrect
+            passwords.at(i);
+            if (ch_it->second._pass == passwords[i])
+                std::cout << GRE << "pass is ok" << END << std::endl;
+            else {
+                std::cout << RED << "pass not ok" << END << std::endl;
+                return;
+            }
+        }
+        catch( ... ) {
+            if (!ch_it->second._pass.empty()) {
+                std::cout << RED << "group has pass but i didnt get it" << END << std::endl;
+                return;
+            }
+            else {
+                std::cout << GRE << "gropu hasnt pass welcome" << END << std::endl;
+            }
+        }
+
+		std::cout << YEL << "after pass\n" << END;
+
+            std::map<std::string, User*>::const_iterator user_search_it;
+			user_search_it = ch_it->second.getUsers().find(usr.getNickname());
+			if (user_search_it != ch_it->second.getUsers().end()) {
+				std::cout <<  GRE << "user already in group" << END << std::endl;
+				// the same info to user
+				return;
+			}
 
 	// 		// 1. check mode of channnel MODE	
 
-	// 		// checking if user doesnt banned on channel
-	// 		for (int i = 0; i < ch_it->second._ban_list.size(); i++) {
-	// 			if (ch_it->second._ban_list[i] == usr.getNickname()) {
-	// 				std::cout << "user banned on channel" << std::endl;
-	// 				// add msg to user
-	// 				return;
-	// 			}
-	// 		}
+			// checking if user doesnt banned on channel
+			for (int i = 0; i < ch_it->second._ban_list.size(); i++) {
+				if (ch_it->second._ban_list[i] == usr.getNickname()) {
+					std::cout << "user banned on channel" << std::endl;
+					// add msg to user
+					return;
+				}
+			}
 
-	// 		int num_groups_user_in = 0;
-	// 		std::map<std::string, Channel>::iterator ban_it;
-	// 		ban_it = this->_channels.begin();
-	// 		for (; ban_it != this->_channels.end(); ban_it++) {
-	// 		if (ban_it->second.getUsers().find(usr.getNickname()) != ban_it->second.getUsers().end())
-	// 			num_groups_user_in++;
-	// 		}
-	// 		if (num_groups_user_in > 10) {
-	// 			std::cout << "more than 10 groups" << std::endl;
-	// 			// msg to usr about it
-	// 		// (405 ERR_TOOMANYCHANNELS)			
-	// 			return;
-	// 		}
+			int num_groups_user_in = 0;
+			std::map<std::string, Channel>::iterator max_group_it;
+			max_group_it = this->_channels.begin();
+			for (; max_group_it != this->_channels.end(); max_group_it++) {
+			if (max_group_it->second.getUsers().find(usr.getNickname()) != max_group_it->second.getUsers().end())
+				num_groups_user_in++;
+			}
+			if (num_groups_user_in > 10) {
+				std::cout << "more than 10 groups" << std::endl;
+				// msg to usr about it
+			// (405 ERR_TOOMANYCHANNELS)			
+				return;
+			}
 
-	// 		ch_it->second.addUser(usr);
+			ch_it->second.addUser(usr);
 		
 	// 		// if joined user -> send msg about new user to all
 	// 			// _PRIVMSG TO ALL USER IN GROUP
 
-	// 		// and Если JOIN прошла хорошо, пользователь получает топик канала
+	// 		// and Если JOIN прошла хорошо, пользователь получает топик канала + СПИСОК ЛЮДЕЙ
 	// 		std::string welcome_str = "welcome to " + ch_it->second.getName() + " group\n";
 	// 		welcome_str += "the topic of the channel is " + ch_it->second.getTopic(); 
 	// 		this->_send(usr.getSocket(), welcome_str);
 		}
 		else { // second var
 	// 		// count num of groups in
+			int num_groups_user_in = 0;
+			std::map<std::string, Channel>::iterator ban_it;
+			ban_it = this->_channels.begin();
+			for (; ban_it != this->_channels.end(); ban_it++) {
+			if (ban_it->second.getUsers().find(usr.getNickname()) != ban_it->second.getUsers().end())
+				// "474 <client> <channel> :Cannot join channel (+b)"
+				num_groups_user_in++;
+			}
+			if (num_groups_user_in > 10) {
+				// msg to usr about it
+				// "405 <client> <channel> :You have joined too many channels"
+				std::cout << "more than 10 groups" << std::endl;
+				return;
+			}
 
-            std::cout << RED << "so new " << ch_it->first << END << std::endl; // del
+			// std::cout << GRE << "group creating..." << END << std::endl;
+			// if (usr._nickname == "") { // is.empty
+			// 	std::cout << "group should have name of owner" << std::endl;
+			// 	return;
+			// }
 
-	// 		int num_groups_user_in = 0;
-	// 		std::map<std::string, Channel>::iterator ban_it;
-	// 		ban_it = this->_channels.begin();
-	// 		for (; ban_it != this->_channels.end(); ban_it++) {
-	// 		if (ban_it->second.getUsers().find(usr.getNickname()) != ban_it->second.getUsers().end())
-	// 			num_groups_user_in++;
-	// 		}
-	// 		if (num_groups_user_in > 10) {
-	// 			std::cout << "more than 10 groups" << std::endl;
-	// 			// msg to usr about it
-	// 			return;
-	// 		}
+			Channel new_ch(tmp_group);
 
-	// 		std::cout << GRE << "group creating..." << END << std::endl;
-	// 		if (usr._nickname == "") {
-	// 			std::cout << "group should have name of owner" << std::endl;
-	// 			return;
-	// 		}
-
-	// 		Channel new_ch(msg.getParamets()[i]);
-	// 		this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
-	// 		new_ch.addUser(usr);
-	// 		new_ch.addChop(usr);
+			new_ch.addUser(usr);
+			new_ch.addChop(usr);
 			
-	// 		try {
-	// 			passwords.at(i);
-	// 			new_ch._pass = passwords[i];
-	// 		}
-	// 		catch ( ... ) {}
+			try {
+				passwords.at(i);
+                std::cout << "prisvoim " << passwords[i]<< std::endl; 
+				new_ch._pass = passwords[i];
+			}
+			catch ( ... ) {}
+            std::cout << "in else pass " << new_ch._pass << std::endl; 
 
 	// 		// info to server that usr is chop now to server
+			std::string to_send = "now you an admin of " + new_ch.getName() + " group";
+			this->_send(usr.getSocket(), to_send);
 
-	// 		std::string to_send = "now you an admin of " + new_ch.getName() + " group";
-	// 		this->_send(usr.getSocket(), to_send);
-
-    //         // after filling all params -> add to group list
-	// 		this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
+            // after filling all params -> add to group list
+			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 		}
 	}
+
+	// std::cout << "\n\nAFTER LOOP " << std::endl;
+	// std::map<std::string, Channel>::iterator check; // del
+	// for (check = _channels.begin(); check != _channels.end(); check++)
+	// 	std::cout << RED << "proverka group after " << check->first << std::endl;
+
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
