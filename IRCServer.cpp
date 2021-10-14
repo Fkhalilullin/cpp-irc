@@ -154,6 +154,8 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
     int         bytesLeft;
     int     	bytes;
 
+    if (buf.empty())
+        return (false);
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
     bytesLeft = buf_delim.length();
@@ -214,7 +216,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         return ; // no such user
     
     Message msg(buf, it->second);
-    User &user = it->second;
+    User    &user = it->second;
 
     _CAP (msg, user);
     _PASS(msg, user);
@@ -229,6 +231,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         if (msg.getCommand() == "PRIVMSG")
             _PRIVMSG(msg, user);
         _LIST(msg, user);
+        _OPER(msg, user);
     }
 }
 
@@ -637,30 +640,34 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	}
 }
 
-void IRCServer::_OPER(const Message &msg) {
-	// Команда: OPER
-	// Параметры: <user> <password>
+void    IRCServer::_OPER( const Message &msg, const User &user )
+{
+    std::string                                 buf;
+    std::multimap<std::string, User>::iterator  it;
 
-	// msg.getParamets()[0] - eto user?
-	// msg.getParamets()[1] - eto pass?
-	// pass == with server pass?
-
-	std::string str_user = msg.getParamets()[0];
-	std::multimap<std::string, User>::iterator us_it;
-
-	us_it = this->_users.find(str_user); // najti group
-	
-	if (_users.count(str_user) > 1)
-		std::cout << "more one user with this name" << std::endl;
-		// ERR
-
-	if (us_it != this->_users.end())
-		this->_operators.insert(std::make_pair(str_user, &us_it->second));
-	// notice server that str_name is serv operator now ..
-
+    if (utils::toUpper(msg.getCommand()) != "OPER")
+        return ;
+    if (msg.getParamets().size() < 2)
+        buf = ":" + _hostname + " 461 " + user.getNickname() + " OPER :Not enough parameters";
+    else if (msg.getParamets()[0] != user.getNickname())
+        buf = ":" + _hostname + " 491 " + user.getNickname() + " :No O-lines for your host";
+    else if (msg.getParamets()[1] != _password)
+        buf = ":" + _hostname + " 464 " + user.getNickname() + " :Password incorrect";
+    else
+    {
+        it = _users.find(user.getNickname());
+        if (it != _users.end())
+        {
+            _operators.insert(std::make_pair(user.getNickname(), &it->second));
+            buf = ":" + _hostname + " 381 " + user.getNickname() + " :You are now an IRC operator";
+        }
+        else
+            std::cerr << RED << "Something went wrong : OPER : No such user" << END << std::endl;
+    }
+    _send(user.getSocket(), buf);
 }
 
-void IRCServer::_LIST( const Message &msg, const User &user ) //const
+void IRCServer::_LIST( const Message &msg, const User &user ) const
 {
     std::map<std::string, Channel>::const_iterator  it;
     std::string                                     buf;
