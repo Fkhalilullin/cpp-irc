@@ -233,6 +233,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _LIST   (msg, *user);
         _OPER   (msg, *user);
         _NAMES  (msg, *user);
+        _TOPIC  (msg, *user);
     }
 }
 
@@ -798,6 +799,62 @@ void IRCServer::_LIST( const Message &msg, const User &user ) const
     }
     buf = ":" + _hostname + " 323 " + user.getNickname() + " :End of /LIST";
     _send(user.getSocket(), buf);
+}
+
+void    IRCServer::_TOPIC(const Message &msg, const User &user) {
+    std::map<std::string, Channel>::iterator ch_it;
+
+    std::string buf_string; 
+    std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "TOPIC")
+        return ;
+
+    if (msg.getParamets().size() == 0) {
+        buf = "461 TOPIC :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    buf_string = msg.getParamets()[0];
+    if (buf_string[0] == '#') {
+        buf_string.erase(0,1);
+    }
+    else {
+        buf = "403 " + buf_string +  " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    
+    ch_it = this->_channels.find(buf_string);
+
+    if (ch_it != _channels.end()) {
+        if (msg.getParamets().size() == 2) {
+            ch_it->second.setTopic(msg.getParamets()[1]);
+
+            buf = ":" + this->_hostname 
+                      + " TOPIC" + " #" 
+                      + buf_string 
+                      + " :" 
+                      + ch_it->second.getTopic();
+            
+            _send(user.getSocket(), buf);
+            return ;    
+        }
+        else if (ch_it->second.getTopic().empty()) {
+            buf = "331 #" + buf_string +  " :No topic is set";
+            _send(user.getSocket(), buf);
+            return ;    
+        }
+        else if (!ch_it->second.getTopic().empty()) {
+            // buf = "332 "
+        }
+    }
+    else {
+        buf = "403 #" + buf_string +  " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
 }
 
 void IRCServer::_NAMES(const Message &msg, const User &user) {

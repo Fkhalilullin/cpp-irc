@@ -8,7 +8,7 @@ Channel::Channel(std::string name) {
 
 		this->_name = name;
 		this->_limit_users = 10;
-		this->_topic = "default";
+		// this->_topic = "";
 		// this->_pass = "123";
 
 		std::cout << "channel \"" << this->_name <<  "\" created\n"; // del it
