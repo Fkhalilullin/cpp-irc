@@ -89,7 +89,7 @@ class IRCServer
         void    _PRIVMSG( const Message &msg, const User &usr);
         void    _CAP    ( const Message &msg, const User &user ) const;
         void    _PASS   ( const Message &msg, User &user );
-        void    _NICK   ( const Message &msg, User &user );
+        void    _NICK   ( const Message &msg, User **user );
         void    _USER   ( const Message &msg, User &user );
 
 		void    _PING   ( const Message &msg, const User &user ) const;
