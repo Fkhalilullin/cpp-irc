@@ -805,6 +805,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     std::map<std::string, Channel>::iterator ch_it;
 	std::string message;
 	std::string buf;
+    std::vector<std::string> buf_string;
 
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
@@ -812,10 +813,19 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	if (_channels.empty())
 		return ;
 
+    for (int i = 0; i < msg.getParamets().size(); ++i) {
+        buf_string.push_back(msg.getParamets()[i]);
+        if (!buf_string.empty() && buf_string[i][0] == '#') {
+            buf_string[i].erase(0, 1);
+        }
+        else
+            buf_string.pop_back();
+    }
+
 	ch_it = _channels.begin();
-	if (!msg.getParamets().empty()) {
-		for (int i = 0; i < msg.getParamets().size(); ++i) {
-			ch_it = this->_channels.find(msg.getParamets()[i]);
+	if (! buf_string.empty()) {
+		for (int i = 0; i <  buf_string.size(); ++i) {
+			ch_it = this->_channels.find( buf_string[i]);
 			if (ch_it != _channels.end()) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
@@ -833,12 +843,12 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 						buf += ch_us_it->second->getNickname() + " ";
 				}
 				_send(user.getSocket(), message + buf);
+                message = "366 "  + user.getNickname() 
+                                    + " "
+                                    + ch_it->second.getName() 
+                                    + " :End of /NAMES list";
+                _send(user.getSocket(), message);
 			}
-			message = "366 "  + user.getNickname() 
-								  + " "
-								  + ch_it->second.getName() 
-								  + " :End of /NAMES list";
-			_send(user.getSocket(), message);
 		}
 	}
 }
