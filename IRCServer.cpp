@@ -236,6 +236,10 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     _QUIT(msg, &user);
     if (user == NULL)
         return ;
+    _KILL(msg, &user);
+    if (user == NULL)
+        return ;
+
     _CAP (msg, *user);
     _PASS(msg, *user);
     _PING(msg, *user);
@@ -937,10 +941,10 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     std::map<std::string, Channel>::const_iterator  cit;
     std::map<std::string, User*>::  const_iterator  uit;
 
+    std::cerr << BLU << msg.getCommand() << END << std::endl;
     if (utils::toUpper(msg.getCommand()) != "QUIT")
         return ;
-    // ":nforce!~nforce@109-252-91-87.nat.spd-mgts.ru QUIT :Quit: Gone to have lunch"
-    // ":nforce!~nforce@109-252-91-87.nat.spd-mgts.ru QUIT :Quit: nforce"
+    std::cerr << BLU << "DONE" << END << std::endl;
     if (msg.getParamets().empty())
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
     else
@@ -951,9 +955,53 @@ void IRCServer::_QUIT( const Message &msg, User **user )
         if (uit != cit->second.getUsers().end())
             _sendToChannel(cit->second.getName(), buf, (*user)->getNickname());
     }
+    buf = "ERROR :Closing Link";
+    _send((*user)->getSocket(), buf);
+
     // removing the user
     close((*user)->getSocket());
     FD_CLR((*user)->getSocket(), &this->_client_fds);
     _removeUser((*user)->getNickname());
     *user = NULL;
+}
+
+void IRCServer::_KILL( const Message &msg, User **user )
+{
+    std::string                                     buf;
+    std::map<std::string, Channel>::const_iterator  cit;
+    std::map<std::string, User*>::  const_iterator  uit;
+
+    if (utils::toUpper(msg.getCommand()) != "KILL")
+        return ;
+    if (msg.getParamets().size() < 2)
+    {
+        buf = ":" + _hostname + " 461 KILL :Not enough parameters";
+        _send((*user)->getSocket(), buf);
+        return ;
+    }
+    if (_operators.find((*user)->getNickname()) == _operators.end())
+    {
+        buf = ":" + _hostname + " 481 " + (*user)->getNickname()
+            + " :Permission Denied- You're not an IRC operator";
+        _send((*user)->getSocket(), buf);
+        return ;
+    }
+    if (_users.find(msg.getParamets()[0]) == _users.end())
+    {
+        buf = ":" + _hostname + " 401 " + msg.getParamets()[0]
+            + " :No such nick";
+        _send((*user)->getSocket(), buf);
+        return ;
+    }
+    buf = ":" + (*user)->getNickname() + " KILL "
+        + msg.getParamets()[0] + " :" + msg.getParamets()[1];
+    _send((*user)->getSocket(), buf);
+    buf = ":localhost QUIT :Killed (" + (*user)->getNickname()
+        + " (" + msg.getParamets()[1] + "))";
+
+    // sending quit message to all
+    User *killedUser = &_users.find(msg.getParamets()[0])->second;
+    User tmp;
+    tmp.setNickname(_hostname);
+    _QUIT(Message(buf, tmp), &killedUser);
 }
