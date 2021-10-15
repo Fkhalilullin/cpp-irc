@@ -233,6 +233,9 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    *user = &it->second;
 
+    _QUIT(msg, &user);
+    if (user == NULL)
+        return ;
     _CAP (msg, *user);
     _PASS(msg, *user);
     _PING(msg, *user);
@@ -946,7 +949,6 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     // removing the user
     close((*user)->getSocket());
     FD_CLR((*user)->getSocket(), &this->_client_fds);
-    // _removeUser(i);
+    _removeUser((*user)->getNickname());
     *user = NULL;
-
 }
