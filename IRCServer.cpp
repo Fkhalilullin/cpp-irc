@@ -232,6 +232,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _JOIN   (msg, *user);
         _LIST   (msg, *user);
         _OPER   (msg, *user);
+		_PART   (msg, *user);
 		if (utils::toUpper(msg.getCommand()) == "NAMES")
         	_NAMES  (msg, *user);
     }
@@ -647,7 +648,8 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	 		// if joined user -> send msg about new user to all ?? need ??
 
 			std::string to_send = "welcome to " + ch_it->second.getName() + " group\n";
-			to_send += "the topic of the channel is " + ch_it->second.getTopic(); 
+			to_send += "the topic of the channel is " + ch_it->second.getTopic();
+
 			this->_send(usr.getSocket(), to_send);
 			_NAMES(msg, usr);
 		}
@@ -681,35 +683,83 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 			catch ( ... ) {}
 
-			_send(usr.getSocket(), "JOIN");
-			to_send = "now you an admin of " + new_ch.getName() + " group";
 			this->_send(usr.getSocket(), to_send);
-
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
+
+			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :#" + new_ch.getName(); 											// IMYA SERVERA
+			to_send = ":" + usr.getNickname() + " JOIN :#" + new_ch.getName();
+			this->_send(usr.getSocket(), to_send);
+			this->_NAMES(msg, usr);
 		}
 	}
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
-	// dolzhno rabotat' s neskol'kimi params(groups)!!
-	// Параметры: <channel>{,<channel>}
-	// Сообщение PART удаляет клиента, пославшего эту команду из списка
-	// активных пользователей для всех каналов, указанных в параметре.
-	// PART #twilight_zone // # is ok?
-
-	// loop po vsem channels -> delete user//
+	
     if (utils::toUpper(msg.getCommand()) != "PART")
-        return ;
+        return;
 
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
-	if (ch_it != this->_channels.end()) {
-		// gruppa finded
-		ch_it->second.removeUser(usr._nickname); // add getter getNick
-		// msg to all sockets that user left channel
+	std::string to_send;
+
+    if (msg.getParamets().empty()) {
+		to_send = "461 " + usr.getNickname() + " PART " + ":Not enough parameters";
+		std::cout << usr.getNickname() + " PART " + ":Not enough parameters" << std::endl;
+		_send(usr.getSocket(), to_send);
+		return;
+    }
+
+	std::vector<std::string> params;
+	std::string tmp_param;
+
+	// if params doesnt have # / & -> return
+	for (int i = 0; i < msg.getParamets().size(); i++) {
+		if (msg.getParamets()[i][0] != '#' && msg.getParamets()[i][0] != '&') {
+			to_send = "400 " + usr.getNickname() + " PART " + ":Could not process invalid parameters";
+			std::cout << usr.getNickname() + " PART " + ":Could not process invalid parameters" << std::endl;
+			_send(usr.getSocket(), to_send);
+			// return; // ignorirovanie
+		}
+		else {
+			tmp_param = msg.getParamets()[i];
+			tmp_param.erase(0, 1);
+			params.push_back(tmp_param);
+		}
 	}
-	else {
-		// group not finded -> return ERR
+
+	for (int i = 0; i < params.size(); i++) {
+		
+		std::map<std::string, Channel>::iterator ch_it;
+		ch_it = this->_channels.find(params[i]);
+		if (ch_it != this->_channels.end()) { // channel exists
+			
+			std::map<std::string, User*>::const_iterator user_search_it;
+			user_search_it = ch_it->second.getUsers().find(usr.getNickname());
+			
+			// user in group. should be deleted
+			if (user_search_it != ch_it->second.getUsers().end()) {
+				ch_it->second.removeUser(usr.getNickname());
+
+				// to_send = usr.getNickname() + " :PART";
+				// std::cout << usr.getNickname() + " leaves channel " + ch_it->first << std::endl;
+				// _send(usr.getSocket(), to_send);
+
+
+				to_send = ":" + usr.getNickname() + " PART :#" + ch_it->first;																	// vivod klientu
+				this->_send(usr.getSocket(), to_send);
+			}
+			else { // no this user in group
+				to_send = "442 " + usr.getNickname() + " " + params[i] + " "  + ":You're not on that channel";
+				std::cout << usr.getNickname() + " " + params[i] + " "  + ":You're not on that channel" << std::endl;
+				_send(usr.getSocket(), to_send);
+			}
+			
+		}
+		else { // channel dosnt exist
+			to_send = "403 " + usr.getNickname() + " " + params[i] + " "  + ":No such channel";
+			std::cout << usr.getNickname() + " " + params[i] + " "  + ":No such channel" << std::endl;
+			_send(usr.getSocket(), to_send);
+			// return; // ignorirovanie
+		}
 	}
 }
 
