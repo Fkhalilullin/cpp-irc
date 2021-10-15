@@ -230,8 +230,11 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     {
         if (msg.getCommand() == "PRIVMSG")
             _PRIVMSG(msg, user);
+		if (msg.getCommand() == "join")
+            _JOIN(msg, user);
         _LIST(msg, user);
         _OPER(msg, user);
+		_NAMES(msg, user);
     }
 }
 
@@ -780,11 +783,13 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
 	
+	if (_channels.empty())
+		return ;
+
 	ch_it = _channels.begin();
 	if (!msg.getParamets().empty()) {
 		for (int i = 0; i < msg.getParamets().size(); ++i) {
 			ch_it = this->_channels.find(msg.getParamets()[i]);
-			
 			if (ch_it != _channels.end()) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
@@ -794,6 +799,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 								 + ch_it->second.getName() 
 								 + " ";
 				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
+					std::cout << "YES\n";
 					ch_chops_it = ch_it->second.getChops().find(ch_us_it->second->getNickname());
 					if (ch_chops_it != ch_it->second.getChops().end())
 						buf += "@" + ch_us_it->second->getNickname() + " ";
@@ -801,7 +807,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 						buf += ch_us_it->second->getNickname() + " ";
 				}
 				_send(user.getSocket(), message + buf);
-				
 			}
 			message = "366 "  + user.getNickname() 
 								  + " "
