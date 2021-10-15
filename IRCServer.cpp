@@ -233,12 +233,15 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    *user = &it->second;
 
-    _QUIT(msg, &user);
-    if (user == NULL)
-        return ;
-    _KILL(msg, &user);
-    if (user == NULL)
-        return ;
+    if (user->isPassworded() && user->isLogged())
+    {
+        _QUIT(msg, &user);
+        if (user == NULL)
+            return ;
+        _KILL(msg, &user);
+        if (user == NULL)
+            return ;
+    }
 
     _CAP (msg, *user);
     _PASS(msg, *user);
@@ -254,6 +257,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _JOIN   (msg, *user);
         _LIST   (msg, *user);
         _OPER   (msg, *user);
+        _KICK   (msg, *user);
 		if (utils::toUpper(msg.getCommand()) == "NAMES")
         	_NAMES  (msg, *user);
     }
@@ -606,7 +610,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 		}
 		
 		if (tmp_param[0] == '#' || tmp_param[0] == '&') {
-			tmp_param.erase(0, 1);
+			// tmp_param.erase(0, 1);
 			params.push_back(tmp_param);
 		}
 		else {
@@ -854,7 +858,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
         if (!buf_string.empty() && buf_string[i][0] == '#') {
-            buf_string[i].erase(0, 1);
+            // buf_string[i].erase(0, 1);
         }
         else
             buf_string.pop_back();
@@ -890,32 +894,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	}
 }
 
-void IRCServer::_KICK(const Message &msg, const User &usr) {
-	// Команда: KICK
-	// Параметры: <channel> <user> [<comment>]
-    // Command: KICK
-    // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
-
-	std::string str_channel = msg.getParamets()[0]; // true??
-	std::string str_user = msg.getParamets()[1]; // true??
-
-    if (utils::toUpper(msg.getCommand()) != "KICK")
-        return ;
-
-	// channel exists?
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it = this->_channels.begin();
-	// if (ch_it != this->_channels.end())
-		//
-	// if (ch_it->second._users.find(str_user))
-		// ch_it->second.removeUser(str_user);
-		// will socket of user deleted?
-	
-
-	// else
-		// no channel
-}
-
 void IRCServer::_INVITE(const Message &msg) { // add USER
 
 	// Команда: INVITE
@@ -941,10 +919,8 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     std::map<std::string, Channel>::const_iterator  cit;
     std::map<std::string, User*>::  const_iterator  uit;
 
-    std::cerr << BLU << msg.getCommand() << END << std::endl;
     if (utils::toUpper(msg.getCommand()) != "QUIT")
         return ;
-    std::cerr << BLU << "DONE" << END << std::endl;
     if (msg.getParamets().empty())
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
     else
@@ -1004,4 +980,65 @@ void IRCServer::_KILL( const Message &msg, User **user )
     User tmp;
     tmp.setNickname(_hostname);
     _QUIT(Message(buf, tmp), &killedUser);
+}
+
+void IRCServer::_KICK( const Message &msg, const User &user )
+{
+    std::string                                     buf;
+    // std::map<std::string, Channel>::const_iterator  cit;
+    // std::map<std::string, User*>::  const_iterator  uit;
+
+    if (utils::toUpper(msg.getCommand()) != "KICK")
+        return ;
+    if (msg.getParamets().size() < 2)
+    {
+        buf = ":" + _hostname + " 461 KILL :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    {
+        std::cerr << BLU << it->first << END << std::endl;
+    }
+    if (_channels.find(msg.getParamets()[0]) == _channels.end())
+    {
+        buf = ":" + _hostname + " 403 " + user.getNickname() + " "
+            + msg.getParamets()[0] + " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    Channel &channel = _channels.find(msg.getParamets()[0])->second;
+    if (channel.getUsers().find(user.getNickname()) == channel.getUsers().end())
+    {
+        buf = ":" + _hostname + " 442 "
+            + channel.getName() + " :You're not on that channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (channel.getChops().find(user.getNickname()) == channel.getChops().end())
+    {
+        buf = ":" + _hostname + " 482 " + user.getNickname() + " "
+            + channel.getName() + " :You're not channel operator";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (channel.getUsers().find(msg.getParamets()[1]) == channel.getUsers().end())
+    {
+        buf = ":" + _hostname + " 441 " + msg.getParamets()[1] + " "
+            + channel.getName() + " :They aren't on that channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    buf = ":" + user.getNickname() + " KICK "
+        + msg.getParamets()[0] + " " + msg.getParamets()[1];
+    _send(channel.getUsers().find(msg.getParamets()[1])->second->getSocket(), buf);
+    // removing user
+    channel.removeUser(msg.getParamets()[1]);
+    // removing channel
+    if (channel.getUsers().size() == 0)
+    {
+        _channels.erase(channel.getName());
+        return ;
+    }
+    _sendToChannel(msg.getParamets()[0], buf, msg.getParamets()[1]);
 }
