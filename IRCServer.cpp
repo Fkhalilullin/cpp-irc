@@ -216,25 +216,23 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         return ; // no such user
     
     Message msg(buf, it->second);
-    User    &user = it->second;
+    User    *user = &it->second;
 
-    _CAP (msg, user);
-    _PASS(msg, user);
-    _PING(msg, user);
-    if (user.isPassworded())
+    _CAP (msg, *user);
+    _PASS(msg, *user);
+    _PING(msg, *user);
+    if (user->isPassworded())
     {
-        _NICK(msg, user);
-        _USER(msg, user);
+        _NICK(msg, &user);
+        _USER(msg, *user);
     }
-    if (user.isPassworded() && user.isLogged())
+    if (user->isPassworded() && user->isLogged())
     {
-        if (msg.getCommand() == "PRIVMSG")
-            _PRIVMSG(msg, user);
-		if (msg.getCommand() == "join")
-            _JOIN(msg, user);
-        _LIST(msg, user);
-        _OPER(msg, user);
-		_NAMES(msg, user);
+        _PRIVMSG(msg, *user);
+        _JOIN   (msg, *user);
+        _LIST   (msg, *user);
+        _OPER   (msg, *user);
+        _NAMES  (msg, *user);
     }
 }
 
@@ -308,7 +306,7 @@ void    IRCServer::_CAP( const Message &msg, const User &user ) const
 {
     std::string	buf;
 
-    if (msg.getCommand() != "CAP")
+    if (utils::toUpper(msg.getCommand()) != "CAP")
         return ;
     if (msg.getParamets().size() > 0 && msg.getParamets()[0] == "LS")
     {
@@ -321,7 +319,7 @@ void    IRCServer::_PASS( const Message &msg, User &user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "PASS")
+    if (utils::toUpper(msg.getCommand()) != "PASS")
         return ;
     if (user.isPassworded())
     {
@@ -372,48 +370,49 @@ bool    IRCServer::_isCorrectNick( const std::string &nick )
     return (true);
 }
 
-void    IRCServer::_NICK( const Message &msg, User &user )
+void    IRCServer::_NICK( const Message &msg, User **user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "NICK")
+    if (utils::toUpper(msg.getCommand()) != "NICK")
         return ;
     if (msg.getParamets().size() == 0)
     {
         buf = "431 :No nickname given";
-        _send(user.getSocket(), buf);
+        _send((*user)->getSocket(), buf);
         return ;
     }
     if (!_isCorrectNick(msg.getParamets()[0]))
     {
         buf = "432 " + msg.getParamets()[0] + " :Erroneus nickname";
-        _send(user.getSocket(), buf);
+        _send((*user)->getSocket(), buf);
         return ;
     }
     if (_users.find(msg.getParamets()[0]) != _users.end())
     {
         buf = "433 " + msg.getParamets()[0] + " :Nickname is already in use";
-        _send(user.getSocket(), buf);
+        _send((*user)->getSocket(), buf);
         return ;
     }
-    std::string oldNick(user.getNickname());
-    User        copy(user);
+    std::string oldNick((*user)->getNickname());
+    User        copy(**user);
 
     copy.setNickname(msg.getParamets()[0]);
-    _removeUser(user.getSocket());
+    _removeUser((*user)->getSocket());
     _addUser(copy);
     if (oldNick.empty())
         buf = "NICK " + copy.getNickname();
     else
         buf = ":" + oldNick + " NICK :" + copy.getNickname();
-    _send(user.getSocket(), buf);
+    (*user) = &(_users.find(copy.getNickname())->second);
+    _send((*user)->getSocket(), buf);
 }
 
 void    IRCServer::_USER( const Message &msg, User &user )
 {
     std::string	buf;
 
-    if (msg.getCommand() != "USER")
+    if (utils::toUpper(msg.getCommand()) != "USER")
         return ;
     if (msg.getParamets().size() < 4)
     {
@@ -456,7 +455,7 @@ void    IRCServer::_PING( const Message &msg, const User &user ) const
 {
     std::string	buf;
 
-    if (msg.getCommand() != "PING")
+    if (utils::toUpper(msg.getCommand()) != "PING")
         return ;
     buf = "PONG " + _hostname;
     _send(user.getSocket(), buf);
@@ -467,7 +466,7 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
     std::map<std::string, Channel>::iterator ch_it;
     std::string buf;
 
-    if (utils::toUpper(msg.getCommand()) != "PRIVMSG")
+    if (utils::toUpper(msg.getCommand()) != "NOTICE")
         return ;
 
     if (msg.getParamets().empty()) {
@@ -518,10 +517,19 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
-	
-	if (msg.getParamets()[0][0] != '#' && msg.getParamets()[0][0] != '&') {
+	if (utils::toUpper(msg.getCommand()) != "JOIN")
+        return ;
 
-		std::cout << msg.getParamets()[0] << std::endl;
+    if (msg.getParamets().empty()) {
+		std::cout << "461 " << ":Not enough parameters" << std::endl;
+		std::string to_send = "461 JOIN :Not enough parameters\r\n";
+		// "<client> <command> :Not enough parameters"
+		_send(usr.getSocket(), to_send);
+		return;
+    }
+
+	if (msg.getParamets()[0][0] != '#' && msg.getParamets()[0][0] != '&') {
+		// no such err for user
 		std::cout << "first param should be group" << std::endl;
 		return;
 	}
@@ -533,11 +541,12 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 		std::string tmp_param = msg.getParamets()[i];
 		for (int k = 0; k < tmp_param.size(); k++) { // check valkd name
 			if (tmp_param[k] == ' ' ||
-				tmp_param[k] == ',' || // 
-				tmp_param[k] == '\a' || // bell
-				tmp_param[k] == '\0' || // nul // real?
-				tmp_param[k] == '\r' || // cr
-				tmp_param[k] == '\n') { // lf
+				tmp_param[k] == ',' ||
+				tmp_param[k] == '\a' ||
+				tmp_param[k] == '\0' ||
+				tmp_param[k] == '\r' ||
+				tmp_param[k] == '\n') {
+					// no err for user
 					std::cout << "invalid name of group" << std::endl; // send to serv
 					return ;
 			}
@@ -553,38 +562,45 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	}
 
 	if (passwords.size() > params.size()) {
-		std::cout << "more passes then groups" << std::endl;
+		// no err for user
+		std::cout << "more passes than groups" << std::endl;
 		return;
 	}
 
 	for (int i = 0; i < params.size(); i++) {
-
 		std::string tmp_group = params[i];
 
 		std::map<std::string, Channel>::iterator ch_it;
-		ch_it = this->_channels.find(tmp_group); // najti grouppy
+		ch_it = this->_channels.find(tmp_group);
 
-		if (ch_it != this->_channels.end()) {
-			// proverit' tam li on / mphet uzhe est'
-			std::cout << "group exist!" << std::endl;
+		if (ch_it != this->_channels.end()) { // finded group
 
-            try { // maybe incorrect
-                passwords.at(i);
-                if (ch_it->second._pass == passwords[i])
-                    std::cout << "pass is ok" << std::endl;
-                else {
-                    std::cout << "pass empty?" << std::endl;
-                    // return;
-                }
+		std::cout << YEL << "group exists\n" << END;
+
+        std::cout << "PASS BEFORE CHECKING " << ch_it->second._pass << "    " << std::endl;
+        
+        
+        try { // maybe incorrect
+            passwords.at(i);
+            if (ch_it->second._pass == passwords[i])
+                std::cout << GRE << "pass is ok" << END << std::endl;
+            else {
+                std::cout << RED << "pass not ok" << END << std::endl;
+                return;
             }
-            catch( ... ) {
-                std::cout << "pass epmty?" << std::endl;
-                // send errro to user//
-                // return;
+        }
+        catch( ... ) {
+            if (!ch_it->second._pass.empty()) {
+                std::cout << RED << "group has pass but i didnt get it" << END << std::endl;
+                return;
             }
-            
-            std::cout << GRE << "after else" << END << std::endl; // del
-            
+            else {
+                std::cout << GRE << "gropu hasnt pass welcome" << END << std::endl;
+            }
+        }
+
+		std::cout << YEL << "after pass\n" << END;
+
             std::map<std::string, User*>::const_iterator user_search_it;
 			user_search_it = ch_it->second.getUsers().find(usr.getNickname());
 			if (user_search_it != ch_it->second.getUsers().end()) {
@@ -593,7 +609,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 				return;
 			}
 
-			// 1. check mode of channnel MODE	
+	// 		// 1. check mode of channnel MODE	
 
 			// checking if user doesnt banned on channel
 			for (int i = 0; i < ch_it->second._ban_list.size(); i++) {
@@ -605,10 +621,10 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 
 			int num_groups_user_in = 0;
-			std::map<std::string, Channel>::iterator ban_it;
-			ban_it = this->_channels.begin();
-			for (; ban_it != this->_channels.end(); ban_it++) {
-			if (ban_it->second.getUsers().find(usr.getNickname()) != ban_it->second.getUsers().end())
+			std::map<std::string, Channel>::iterator max_group_it;
+			max_group_it = this->_channels.begin();
+			for (; max_group_it != this->_channels.end(); max_group_it++) {
+			if (max_group_it->second.getUsers().find(usr.getNickname()) != max_group_it->second.getUsers().end())
 				num_groups_user_in++;
 			}
 			if (num_groups_user_in > 10) {
@@ -620,56 +636,64 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 			ch_it->second.addUser(usr);
 		
-			// if joined user -> send msg about new user to all
-				// _PRIVMSG TO ALL USER IN GROUP
+	// 		// if joined user -> send msg about new user to all
+	// 			// _PRIVMSG TO ALL USER IN GROUP
 
-			// and Если JOIN прошла хорошо, пользователь получает топик канала
-			std::string welcome_str = "welcome to " + ch_it->second.getName() + " group\n";
-			welcome_str += "the topic of the channel is " + ch_it->second.getTopic(); 
-			this->_send(usr.getSocket(), welcome_str);
+	// 		// and Если JOIN прошла хорошо, пользователь получает топик канала + СПИСОК ЛЮДЕЙ
+	// 		std::string welcome_str = "welcome to " + ch_it->second.getName() + " group\n";
+	// 		welcome_str += "the topic of the channel is " + ch_it->second.getTopic(); 
+	// 		this->_send(usr.getSocket(), welcome_str);
 		}
-		else {
-			// count num of groups in
+		else { // second var
+	// 		// count num of groups in
 			int num_groups_user_in = 0;
 			std::map<std::string, Channel>::iterator ban_it;
 			ban_it = this->_channels.begin();
 			for (; ban_it != this->_channels.end(); ban_it++) {
 			if (ban_it->second.getUsers().find(usr.getNickname()) != ban_it->second.getUsers().end())
+				// "474 <client> <channel> :Cannot join channel (+b)"
 				num_groups_user_in++;
 			}
 			if (num_groups_user_in > 10) {
-				std::cout << "more than 10 groups" << std::endl;
 				// msg to usr about it
+				// "405 <client> <channel> :You have joined too many channels"
+				std::cout << "more than 10 groups" << std::endl;
 				return;
 			}
 
-			std::cout << "group creating..." << std::endl;
-			if (usr._nickname == "") {
-				std::cout << "group should have name of owner" << std::endl;
-				return;
-			}
+			// std::cout << GRE << "group creating..." << END << std::endl;
+			// if (usr._nickname == "") { // is.empty
+			// 	std::cout << "group should have name of owner" << std::endl;
+			// 	return;
+			// }
 
-			Channel new_ch(msg.getParamets()[i]);
-			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
+			Channel new_ch(tmp_group);
+
 			new_ch.addUser(usr);
 			new_ch.addChop(usr);
 			
 			try {
 				passwords.at(i);
+                std::cout << "prisvoim " << passwords[i]<< std::endl; 
 				new_ch._pass = passwords[i];
 			}
 			catch ( ... ) {}
+            std::cout << "in else pass " << new_ch._pass << std::endl; 
 
-			// info to server that usr is chop now to server
-
+	// 		// info to server that usr is chop now to server
 			std::string to_send = "now you an admin of " + new_ch.getName() + " group";
-			std::cout << "!!!1111" << std::endl;
 			this->_send(usr.getSocket(), to_send);
 
             // after filling all params -> add to group list
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 		}
 	}
+
+	// std::cout << "\n\nAFTER LOOP " << std::endl;
+	// std::map<std::string, Channel>::iterator check; // del
+	// for (check = _channels.begin(); check != _channels.end(); check++)
+	// 	std::cout << RED << "proverka group after " << check->first << std::endl;
+
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
@@ -680,6 +704,8 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	// PART #twilight_zone // # is ok?
 
 	// loop po vsem channels -> delete user//
+    if (utils::toUpper(msg.getCommand()) != "PART")
+        return ;
 
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it = this->_channels.find(msg.getParamets()[0]); // najti group
@@ -824,6 +850,9 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 	std::string str_channel = msg.getParamets()[0]; // true??
 	std::string str_user = msg.getParamets()[1]; // true??
 
+    if (utils::toUpper(msg.getCommand()) != "KICK")
+        return ;
+
 	// channel exists?
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it = this->_channels.begin();
@@ -846,6 +875,8 @@ void IRCServer::_INVITE(const Message &msg) { // add USER
 	std::string str_channel = msg.getParamets()[0]; // true??
 	std::string str_user = msg.getParamets()[1]; // true??
 
+    if (utils::toUpper(msg.getCommand()) != "INVITE")
+        return ;
 	// 1. check if client who invites new user -> is choop in channel
 	std::map<std::string, Channel>::iterator ch_it;
 	ch_it =  this->_channels.find(str_channel);
