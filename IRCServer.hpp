@@ -106,6 +106,7 @@ class IRCServer
 		void    _LIST   (const Message &msg, const User &user) const; //const;
 		void    _NAMES  (const Message &msg, const User &user); // k
         void    _QUIT   ( const Message &msg, User **user );
+        void    _KILL   ( const Message &msg, User **user );
 
         // QUIT cmd -? -> JUST exit from server?
 
