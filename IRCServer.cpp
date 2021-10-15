@@ -519,22 +519,25 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
 }
 
 void IRCServer::_JOIN(const Message &msg, User &usr) {
-	usr.setNickname("boy"); // to del
 
     if (utils::toUpper(msg.getCommand()) != "JOIN")
         return;
 
+	std::string to_send;
+
     if (msg.getParamets().empty()) {
-		std::cout << "461 " << ":Not enough parameters" << std::endl;
-		std::string to_send = "461 JOIN :Not enough parameters\r\n";
-		// "<client> <command> :Not enough parameters"
+		to_send = "461 " + usr.getNickname() + " JOIN " + ":Not enough parameters";
+		std::cout << usr.getNickname() + " JOIN " + ":Not enough parameters" << std::endl;
 		_send(usr.getSocket(), to_send);
 		return;
     }
 
 	if (msg.getParamets()[0][0] != '#' && msg.getParamets()[0][0] != '&') {
-		// no such err for user
-		std::cout << "first param should be group" << std::endl;
+		// first param should be group
+
+		to_send = "400 " + usr.getNickname() + " JOIN " + ":Could not process invalid parameters";
+		std::cout << usr.getNickname() + " JOIN " + ":Could not process invalid parameters" << std::endl;
+		_send(usr.getSocket(), to_send);
 		return;
 	}
 
@@ -542,16 +545,19 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	std::vector<std::string> passwords;
 	for (int i = 0; i < msg.getParamets().size(); i++) {
 		
+        // check valid name of a group
 		std::string tmp_param = msg.getParamets()[i];
-		for (int k = 0; k < tmp_param.size(); k++) { // check valkd name
+		for (int k = 0; k < tmp_param.size(); k++) {
 			if (tmp_param[k] == ' ' ||
 				tmp_param[k] == ',' ||
 				tmp_param[k] == '\a' ||
 				tmp_param[k] == '\0' ||
 				tmp_param[k] == '\r' ||
 				tmp_param[k] == '\n') {
-					// no err for user
-					std::cout << "invalid name of group" << std::endl; // send to serv
+					
+					to_send = "400 " + usr.getNickname() + " JOIN " + ":Could not process invalid parameters";
+					std::cout << usr.getNickname() + " JOIN " + ":Could not process invalid parameters" << std::endl;
+					_send(usr.getSocket(), to_send);
 					return ;
 			}
 		}
@@ -566,64 +572,62 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	}
 
 	if (passwords.size() > params.size()) {
-		// no err for user
-		std::cout << "more passes than groups" << std::endl;
+		std::cout << "more passes were provided than groups" << std::endl; // maybe set invalid params
 		return;
 	}
 
 	for (int i = 0; i < params.size(); i++) {
-		std::string tmp_group = params[i];
 
+		std::string tmp_group = params[i];
 		std::map<std::string, Channel>::iterator ch_it;
 		ch_it = this->_channels.find(tmp_group);
 
-		if (ch_it != this->_channels.end()) { // finded group
-
-		std::cout << YEL << "group exists\n" << END;
-
-        std::cout << "PASS BEFORE CHECKING " << ch_it->second._pass << "    " << std::endl;
+		if (ch_it != this->_channels.end()) {      
         
-        
-        try { // maybe incorrect
-            passwords.at(i);
-            if (ch_it->second._pass == passwords[i])
-                std::cout << GRE << "pass is ok" << END << std::endl;
-            else {
-                std::cout << RED << "pass not ok" << END << std::endl;
-                return;
-            }
-        }
-        catch( ... ) {
-            if (!ch_it->second._pass.empty()) {
-                std::cout << RED << "group has pass but i didnt get it" << END << std::endl;
-                return;
-            }
-            else {
-                std::cout << GRE << "gropu hasnt pass welcome" << END << std::endl;
-            }
-        }
+			try {
+				passwords.at(i);
+				// invalid pass
+				if (!(ch_it->second._pass == passwords[i])) {
 
-		std::cout << YEL << "after pass\n" << END;
+					to_send = "475 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)";
+					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)" << std::endl;
+					_send(usr.getSocket(), to_send);
+					return;
+				}
+			}
+			catch( ... ) {
+				if (!ch_it->second._pass.empty()) {
+					to_send = "475 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)";
+					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)" << std::endl;
+					_send(usr.getSocket(), to_send);
+					return;
+				}
+			}
+			std::cout << "whats inside" << std::endl; // to del
 
             std::map<std::string, User*>::const_iterator user_search_it;
 			user_search_it = ch_it->second.getUsers().find(usr.getNickname());
 			if (user_search_it != ch_it->second.getUsers().end()) {
-				std::cout <<  GRE << "user already in group" << END << std::endl;
-				// the same info to user
+				// user already in this group;
 				return;
 			}
 
-	// 		// 1. check mode of channnel MODE	
+
+			// check mode of channnel MODE
+
+			// TEST Ban list
 
 			// checking if user doesnt banned on channel
 			for (int i = 0; i < ch_it->second._ban_list.size(); i++) {
 				if (ch_it->second._ban_list[i] == usr.getNickname()) {
-					std::cout << "user banned on channel" << std::endl;
-					// add msg to user
+					to_send = "474 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+b)";
+					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+b)" << std::endl;
+					_send(usr.getSocket(), to_send);
 					return;
 				}
 			}
 
+			// if more than 10 groups
 			int num_groups_user_in = 0;
 			std::map<std::string, Channel>::iterator max_group_it;
 			max_group_it = this->_channels.begin();
@@ -632,21 +636,21 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 				num_groups_user_in++;
 			}
 			if (num_groups_user_in > 10) {
-				std::cout << "more than 10 groups" << std::endl;
-				// msg to usr about it
-			// (405 ERR_TOOMANYCHANNELS)			
+				to_send = "405 " + usr.getNickname() + " " + ch_it->first + " " + ":You have joined too many channels";
+				std::cout << usr.getNickname() + " " + ch_it->first + " " + ":You have joined too many channels" << std::endl;
+				_send(usr.getSocket(), to_send);
 				return;
 			}
 
+			_send(usr.getSocket(), "JOIN");
 			ch_it->second.addUser(usr);
 		
-	// 		// if joined user -> send msg about new user to all
-	// 			// _PRIVMSG TO ALL USER IN GROUP
+	 		// if joined user -> send msg about new user to all ?? need ??
 
 	// 		// and Если JOIN прошла хорошо, пользователь получает топик канала + СПИСОК ЛЮДЕЙ
-	// 		std::string welcome_str = "welcome to " + ch_it->second.getName() + " group\n";
-	// 		welcome_str += "the topic of the channel is " + ch_it->second.getTopic(); 
-	// 		this->_send(usr.getSocket(), welcome_str);
+			std::string to_send = "welcome to " + ch_it->second.getName() + " group\n";
+			to_send += "the topic of the channel is " + ch_it->second.getTopic(); 
+			this->_send(usr.getSocket(), to_send);
 		}
 		else { // second var
 	// 		// count num of groups in
@@ -689,15 +693,12 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			this->_send(usr.getSocket(), to_send);
 
             // after filling all params -> add to group list
+            std::cout << YEL << "ZASHEL????" << END << std::endl;
+			// ???????			// _send(usr.getSocket(), "JOIN");
+
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 		}
 	}
-
-	// std::cout << "\n\nAFTER LOOP " << std::endl;
-	// std::map<std::string, Channel>::iterator check; // del
-	// for (check = _channels.begin(); check != _channels.end(); check++)
-	// 	std::cout << RED << "proverka group after " << check->first << std::endl;
-
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
