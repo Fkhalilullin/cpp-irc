@@ -190,6 +190,21 @@ void    IRCServer::_removeUser(int sockfd)
         _users.erase(it);
 }
 
+void    IRCServer::_removeUser( const std::string &nick )
+{
+    std::multimap<std::string, Channel>::iterator chit;
+    std::multimap<std::string, User>   ::iterator uit;
+
+    // removing from _users
+    uit = _users.find(nick);
+    if (uit != _users.end())
+        _users.erase(uit);
+
+    // removing from _channels
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+        chit->second.removeUser(nick);
+}
+
 void    IRCServer::_addUser(int sockfd)
 {
     User new_user;
@@ -218,6 +233,9 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    *user = &it->second;
 
+    _QUIT(msg, &user);
+    if (user == NULL)
+        return ;
     _CAP (msg, *user);
     _PASS(msg, *user);
     _PING(msg, *user);
@@ -343,6 +361,28 @@ void    IRCServer::_PASS( const Message &msg, User &user )
         else
             buf = "464 " + user.getNickname() + " :Password incorrect";
         _send(user.getSocket(), buf);
+    }
+}
+
+void    IRCServer::_sendToChannel( const std::string &channel,
+                        const std::string &buf,
+                        const std::string &nick /* = "" */ )
+{
+    std::map<std::string, Channel>::const_iterator  chit;
+    std::map<std::string, User*>::const_iterator    it;
+
+    chit = _channels.find(channel);
+    if (chit == _channels.end())
+    {
+        std::cerr << RED << "Something went wrong : _sendToChannel : No such channel"
+                  << END << std::endl;
+        return ;
+    }
+    it = chit->second.getUsers().begin();
+    for (; it != chit->second.getUsers().end(); ++it)
+    {
+        if (it->first != nick)
+            _send(it->second->getSocket(), buf);
     }
 }
 
@@ -849,6 +889,8 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 void IRCServer::_KICK(const Message &msg, const User &usr) {
 	// Команда: KICK
 	// Параметры: <channel> <user> [<comment>]
+    // Command: KICK
+    // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
 
 	std::string str_channel = msg.getParamets()[0]; // true??
 	std::string str_user = msg.getParamets()[1]; // true??
@@ -887,4 +929,31 @@ void IRCServer::_INVITE(const Message &msg) { // add USER
 		// ch_it->second.addChop(usr);
 
 
+}
+
+void IRCServer::_QUIT( const Message &msg, User **user )
+{
+    std::string                                     buf;
+    std::map<std::string, Channel>::const_iterator  cit;
+    std::map<std::string, User*>::  const_iterator  uit;
+
+    if (utils::toUpper(msg.getCommand()) != "QUIT")
+        return ;
+    // ":nforce!~nforce@109-252-91-87.nat.spd-mgts.ru QUIT :Quit: Gone to have lunch"
+    // ":nforce!~nforce@109-252-91-87.nat.spd-mgts.ru QUIT :Quit: nforce"
+    if (msg.getParamets().empty())
+        buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
+    else
+        buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + msg.getParamets()[0];
+    for (cit = _channels.begin(); cit != _channels.end(); ++cit)
+    {
+        uit = cit->second.getUsers().find((*user)->getNickname());
+        if (uit != cit->second.getUsers().end())
+            _sendToChannel(cit->second.getName(), buf, (*user)->getNickname());
+    }
+    // removing the user
+    close((*user)->getSocket());
+    FD_CLR((*user)->getSocket(), &this->_client_fds);
+    _removeUser((*user)->getNickname());
+    *user = NULL;
 }
