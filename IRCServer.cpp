@@ -232,8 +232,10 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _JOIN   (msg, *user);
         _LIST   (msg, *user);
         _OPER   (msg, *user);
-        _NAMES  (msg, *user);
+        if (utils::toUpper(msg.getCommand()) == "NAMES")
+            _NAMES  (msg, *user);
         _TOPIC  (msg, *user);
+        _INVITE (msg, *user);
     }
 }
 
@@ -905,8 +907,8 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	std::string buf;
     std::vector<std::string> buf_string;
 
-    if (utils::toUpper(msg.getCommand()) != "NAMES")
-        return ;
+    // if (utils::toUpper(msg.getCommand()) != "NAMES")
+    //     return ;
 	
 	// if (_channels.empty())
 	// 	return ;
@@ -985,21 +987,11 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 		// no channel
 }
 
-void IRCServer::_INVITE(const Message &msg) { // add USER
+void    _INVITE (const Message &msg, const User &user) {
 
 	// Команда: INVITE
 	// Параметры: <nickname> <channel>
 
-	std::string str_channel = msg.getParamets()[0]; // true??
-	std::string str_user = msg.getParamets()[1]; // true??
-
     if (utils::toUpper(msg.getCommand()) != "INVITE")
         return ;
-	// 1. check if client who invites new user -> is choop in channel
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it =  this->_channels.find(str_channel);
-	// if (ch_it != this->_channels.end())
-		// ch_it->second.addChop(usr);
-
-
 }
