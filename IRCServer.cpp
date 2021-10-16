@@ -987,11 +987,33 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 		// no channel
 }
 
-void    _INVITE (const Message &msg, const User &user) {
+void IRCServer::_INVITE (const Message &msg, const User &user) {
 
 	// Команда: INVITE
 	// Параметры: <nickname> <channel>
+    std::string buf;
+    std::string buf_string;
 
     if (utils::toUpper(msg.getCommand()) != "INVITE")
         return ;
+    
+    if (msg.getParamets().size() < 2) {
+        buf = ":" + this->_hostname  
+                  + " 461 " 
+                  + user.getNickname() 
+                  + " " 
+                  + "TOPIC :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    buf_string = msg.getParamets()[1];
+    if (buf_string[0] == '#') {
+        buf_string.erase(0,1);
+    }
+    else {
+        return ;
+    }
+    
+    
 }
