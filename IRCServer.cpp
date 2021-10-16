@@ -811,7 +811,11 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
         return ;
 
     if (msg.getParamets().size() == 0) {
-        buf = "461 TOPIC :Not enough parameters";
+        buf = ":" + this->_hostname  
+                  + " 461 " 
+                  + user.getNickname() 
+                  + " " 
+                  + "TOPIC :Not enough parameters";
         _send(user.getSocket(), buf);
         return ;
     }
@@ -821,7 +825,11 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
         buf_string.erase(0,1);
     }
     else {
-        buf = "403 " + buf_string +  " :No such channel";
+        buf = ":" + this->_hostname  
+                  + " 403 " 
+                  + user.getNickname() 
+                  + " " + buf_string 
+                  +  " :No such channel";
         _send(user.getSocket(), buf);
         return ;
     }
@@ -832,7 +840,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
         if (msg.getParamets().size() == 2) {
             ch_it->second.setTopic(msg.getParamets()[1]);
 
-            buf = ":" + this->_hostname 
+            buf = ":" + user.getNickname()
                       + " TOPIC" + " #" 
                       + buf_string 
                       + " :" 
@@ -842,16 +850,33 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
             return ;    
         }
         else if (ch_it->second.getTopic().empty()) {
-            buf = "331 #" + buf_string +  " :No topic is set";
+            buf = ":" + this->_hostname  
+                  + " 331 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :No topic is set";
             _send(user.getSocket(), buf);
             return ;    
         }
         else if (!ch_it->second.getTopic().empty()) {
-            // buf = "332 "
+            buf = ":" + this->_hostname  
+                  + " 332 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :"
+                  + ch_it->second.getTopic();
+             _send(user.getSocket(), buf);
         }
     }
     else {
-        buf = "403 #" + buf_string +  " :No such channel";
+        buf =  ":" + this->_hostname  
+                  + " 403 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :No such channel";
         _send(user.getSocket(), buf);
         return ;
     }
