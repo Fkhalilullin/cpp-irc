@@ -908,8 +908,8 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
 	
-	if (_channels.empty())
-		return ;
+	// if (_channels.empty())
+	// 	return ;
 
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
@@ -920,6 +920,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
             buf_string.pop_back();
     }
 
+
 	ch_it = _channels.begin();
 	if (! buf_string.empty()) {
 		for (int i = 0; i <  buf_string.size(); ++i) {
@@ -928,12 +929,12 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
 				ch_us_it = ch_it->second.getUsers().begin();
-				message = "353 " + user.getNickname() 
-								 + " = "
-								 + ch_it->second.getName() 
-								 + " ";
+				message =":" + this->_hostname 
+                             + " 353 " + user.getNickname() 
+							 + " = #"
+							 + ch_it->second.getName() 
+						     + " :";
 				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
-					std::cout << "YES\n";
 					ch_chops_it = ch_it->second.getChops().find(ch_us_it->second->getNickname());
 					if (ch_chops_it != ch_it->second.getChops().end())
 						buf += "@" + ch_us_it->second->getNickname() + " ";
@@ -941,12 +942,21 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 						buf += ch_us_it->second->getNickname() + " ";
 				}
 				_send(user.getSocket(), message + buf);
-                message = "366 "  + user.getNickname() 
-                                    + " "
-                                    + ch_it->second.getName() 
-                                    + " :End of /NAMES list";
+                message = ":" + this->_hostname 
+                              + " 366 "  + user.getNickname() 
+                              + " #"
+                              + ch_it->second.getName() 
+                              + " :End of /NAMES list";
                 _send(user.getSocket(), message);
-			}
+			} 
+            else {
+                message = ":" + this->_hostname 
+                              + " 366 "  + user.getNickname() 
+                              + " #"
+                              + buf_string[i]
+                              + " :End of /NAMES list";
+                _send(user.getSocket(), message);
+            }
 		}
 	}
 }
