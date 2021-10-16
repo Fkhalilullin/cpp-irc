@@ -254,8 +254,10 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _JOIN   (msg, *user);
         _LIST   (msg, *user);
         _OPER   (msg, *user);
-		if (utils::toUpper(msg.getCommand()) == "NAMES")
-        	_NAMES  (msg, *user);
+        if (utils::toUpper(msg.getCommand()) == "NAMES")
+            _NAMES  (msg, *user);
+        _TOPIC  (msg, *user);
+        _INVITE (msg, *user);
     }
 }
 
@@ -268,13 +270,19 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
         return ;
 
     if (msg.getParamets().empty()) {
-        buf = "411 :No recipient given PRIVMSG";
+        buf = ":" + this->_hostname 
+                  + " 411 " 
+                  + usr.getNickname() + 
+                  + " :No recipient given PRIVMSG";
         _send(usr.getSocket(), buf);
         return ; 
     }
 
     if(msg.getParamets().size() == 1) {
-        buf = "412 :No text to send";
+        buf = ":" + this->_hostname 
+                  + " 412 " 
+                  + usr.getNickname() 
+                  + " :No text to send";
         _send(usr.getSocket(), buf);
         return ; 
     }
@@ -282,7 +290,12 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
         for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
             if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) {
-                buf = "407: " +  msg.getParamets()[i] + " :Duplicate recipients. No message delivered";
+                buf = ":" + this->_hostname 
+                          + " 407 "
+                          + usr.getNickname() 
+                          + " " 
+                          +  msg.getParamets()[i] 
+                          + " :Duplicate recipients. No message delivered";
                 us_it = this->_users.find(msg.getParamets()[i]);
                 _send(us_it->second.getSocket(), buf);
                 return ;
@@ -318,7 +331,12 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
             }
         }
         else{
-            buf = "401: " + msg.getParamets()[i] + " :No such nick/channel";
+            buf = ":" + this->_hostname 
+                      + " 401 " 
+                      + usr.getNickname() 
+                      + " " 
+                      + msg.getParamets()[i] 
+                      + " :No such nick/channel";
             _send(usr.getSocket(), buf);
             return ; 
         }
@@ -838,6 +856,87 @@ void IRCServer::_LIST( const Message &msg, const User &user ) const
     _send(user.getSocket(), buf);
 }
 
+void    IRCServer::_TOPIC(const Message &msg, const User &user) {
+    std::map<std::string, Channel>::iterator ch_it;
+
+    std::string buf_string; 
+    std::string buf;
+
+    if (utils::toUpper(msg.getCommand()) != "TOPIC")
+        return ;
+
+    if (msg.getParamets().size() == 0) {
+        buf = ":" + this->_hostname  
+                  + " 461 " 
+                  + user.getNickname() 
+                  + " " 
+                  + "TOPIC :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    buf_string = msg.getParamets()[0];
+    if (buf_string[0] == '#') {
+        buf_string.erase(0,1);
+    }
+    else {
+        buf = ":" + this->_hostname  
+                  + " 403 " 
+                  + user.getNickname() 
+                  + " " + buf_string 
+                  +  " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    
+    ch_it = this->_channels.find(buf_string);
+
+    if (ch_it != _channels.end()) {
+        if (msg.getParamets().size() == 2) {
+            ch_it->second.setTopic(msg.getParamets()[1]);
+
+            buf = ":" + user.getNickname()
+                      + " TOPIC" + " #" 
+                      + buf_string 
+                      + " :" 
+                      + ch_it->second.getTopic();
+            
+            _send(user.getSocket(), buf);
+            return ;    
+        }
+        else if (ch_it->second.getTopic().empty()) {
+            buf = ":" + this->_hostname  
+                  + " 331 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :No topic is set";
+            _send(user.getSocket(), buf);
+            return ;    
+        }
+        else if (!ch_it->second.getTopic().empty()) {
+            buf = ":" + this->_hostname  
+                  + " 332 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :"
+                  + ch_it->second.getTopic();
+             _send(user.getSocket(), buf);
+        }
+    }
+    else {
+        buf =  ":" + this->_hostname  
+                  + " 403 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string 
+                  + " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+}
+
 void IRCServer::_NAMES(const Message &msg, const User &user) {
 
     std::map<std::string, Channel>::iterator ch_it;
@@ -848,8 +947,8 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     // if (utils::toUpper(msg.getCommand()) != "NAMES")
         // return ;
 	
-	if (_channels.empty())
-		return ;
+	// if (_channels.empty())
+	// 	return ;
 
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
@@ -860,6 +959,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
             buf_string.pop_back();
     }
 
+
 	ch_it = _channels.begin();
 	if (! buf_string.empty()) {
 		for (int i = 0; i <  buf_string.size(); ++i) {
@@ -868,10 +968,11 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
 				ch_us_it = ch_it->second.getUsers().begin();
-				message = "353 " + user.getNickname() 
-								 + " = "
-								 + ch_it->second.getName() 
-								 + " :";
+				message =":" + this->_hostname 
+                             + " 353 " + user.getNickname() 
+							 + " = #"
+							 + ch_it->second.getName() 
+						     + " :";
 				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
 					ch_chops_it = ch_it->second.getChops().find(ch_us_it->second->getNickname());
 					if (ch_chops_it != ch_it->second.getChops().end())
@@ -880,12 +981,21 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 						buf += ch_us_it->second->getNickname() + " ";
 				}
 				_send(user.getSocket(), message + buf);
-                message = "366 "  + user.getNickname() 
-                                    + " "
-                                    + ch_it->second.getName() 
-                                    + " :End of /NAMES list";
+                message = ":" + this->_hostname 
+                              + " 366 "  + user.getNickname() 
+                              + " #"
+                              + ch_it->second.getName() 
+                              + " :End of /NAMES list";
                 _send(user.getSocket(), message);
-			}
+			} 
+            else {
+                message = ":" + this->_hostname 
+                              + " 366 "  + user.getNickname() 
+                              + " #"
+                              + buf_string[i]
+                              + " :End of /NAMES list";
+                _send(user.getSocket(), message);
+            }
 		}
 	}
 }
@@ -916,23 +1026,35 @@ void IRCServer::_KICK(const Message &msg, const User &usr) {
 		// no channel
 }
 
-void IRCServer::_INVITE(const Message &msg) { // add USER
+void IRCServer::_INVITE (const Message &msg, const User &user) {
 
 	// Команда: INVITE
 	// Параметры: <nickname> <channel>
-
-	std::string str_channel = msg.getParamets()[0]; // true??
-	std::string str_user = msg.getParamets()[1]; // true??
+    std::string buf;
+    std::string buf_string;
 
     if (utils::toUpper(msg.getCommand()) != "INVITE")
         return ;
-	// 1. check if client who invites new user -> is choop in channel
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it =  this->_channels.find(str_channel);
-	// if (ch_it != this->_channels.end())
-		// ch_it->second.addChop(usr);
+    
+    if (msg.getParamets().size() < 2) {
+        buf = ":" + this->_hostname  
+                  + " 461 " 
+                  + user.getNickname() 
+                  + " " 
+                  + "TOPIC :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
 
-
+    buf_string = msg.getParamets()[1];
+    if (buf_string[0] == '#') {
+        buf_string.erase(0,1);
+    }
+    else {
+        return ;
+    }
+    
+    
 }
 
 void IRCServer::_QUIT( const Message &msg, User **user )
