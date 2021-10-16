@@ -246,13 +246,19 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
         return ;
 
     if (msg.getParamets().empty()) {
-        buf = "411 :No recipient given PRIVMSG";
+        buf = ":" + this->_hostname 
+                  + " 411 " 
+                  + usr.getNickname() + 
+                  + " :No recipient given PRIVMSG";
         _send(usr.getSocket(), buf);
         return ; 
     }
 
     if(msg.getParamets().size() == 1) {
-        buf = "412 :No text to send";
+        buf = ":" + this->_hostname 
+                  + " 412 " 
+                  + usr.getNickname() 
+                  + " :No text to send";
         _send(usr.getSocket(), buf);
         return ; 
     }
@@ -260,7 +266,12 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
     for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
         for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
             if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) {
-                buf = "407: " +  msg.getParamets()[i] + " :Duplicate recipients. No message delivered";
+                buf = ":" + this->_hostname 
+                          + " 407 "
+                          + usr.getNickname() 
+                          + " " 
+                          +  msg.getParamets()[i] 
+                          + " :Duplicate recipients. No message delivered";
                 us_it = this->_users.find(msg.getParamets()[i]);
                 _send(us_it->second.getSocket(), buf);
                 return ;
@@ -296,7 +307,12 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
             }
         }
         else{
-            buf = "401: " + msg.getParamets()[i] + " :No such nick/channel";
+            buf = ":" + this->_hostname 
+                      + " 401 " 
+                      + usr.getNickname() 
+                      + " " 
+                      + msg.getParamets()[i] 
+                      + " :No such nick/channel";
             _send(usr.getSocket(), buf);
             return ; 
         }
