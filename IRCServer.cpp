@@ -78,6 +78,8 @@ void IRCServer::start()
             }
             catch (const std::exception& e)
             {
+
+                // _QUIT(Message())
                 close(i);
                 FD_CLR(i, &this->_client_fds);
                 _removeUser(i);
@@ -329,10 +331,11 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
                                     + msg.getParamets().back()); 
             std::map<std::string, User*>::const_iterator us_ch_it;
 
-            us_ch_it = ch_it->second.getUsers().begin();
-            for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
-		        _send(us_ch_it->second->getSocket(), message);
-            }
+            // us_ch_it = ch_it->second.getUsers().begin();
+            // for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
+		    //     _send(us_ch_it->second->getSocket(), message);
+            // }
+            _sendToChannel(ch_it->second.getName(), message, msg.getPrefix());
         }
         else{
             buf = ":" + this->_hostname 
@@ -723,7 +726,11 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			// _NAMES(msg, usr);
 
 			this->_sendToChannel(ch_it->second.getName(), to_send); // + iskluchenie
-			this->_NAMES(msg, usr);
+			Message namesMsg(msg);
+            namesMsg.setCommand("NAMES");
+            // std::cerr << BLU <<  << END << std::endl;
+			this->_NAMES(namesMsg, usr);
+            
 		}
 		else {
 			// if more than 10 groups
@@ -761,7 +768,9 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :" + new_ch.getName(); 											// IMYA SERVERA
 			to_send = ":" + usr.getNickname() + " JOIN :" + new_ch.getName();
 			this->_send(usr.getSocket(), to_send);
-			this->_NAMES(msg, usr);
+            Message namesMsg(msg);
+            namesMsg.setCommand("NAMES");
+			this->_NAMES(namesMsg, usr);
 		}
 	}
 }
@@ -1016,7 +1025,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
-	
+	std::cerr << BLU << "SMTH===" << END << std::endl;
 	// if (_channels.empty())
 	// 	return ;
 
@@ -1038,7 +1047,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
 				ch_us_it = ch_it->second.getUsers().begin();
-                 std::cerr << BLU << user.getNickname() << END << std::endl;
 				message =":" + this->_hostname 
                              + " 353 " + user.getNickname() 
 							 + " = "

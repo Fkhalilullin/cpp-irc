@@ -10,12 +10,14 @@
 
 class Message {
 public:
-	Message(std::string, const User& ); 
+	Message(std::string, const User& );
+	Message( const Message &rhs ); 
 	~Message();
 
 	const std::string				&getPrefix() const;
 	const std::string				&getCommand() const;
 	const std::vector<std::string>	&getParamets() const;
+	void							setCommand( const std::string &command );
 
 private:
 	Message();

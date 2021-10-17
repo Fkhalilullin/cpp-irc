@@ -2,11 +2,24 @@
 
 Message::Message() {}
 
+Message::Message( const Message &rhs ) : _prefix    (rhs._prefix    ),
+                                _parameters(rhs._parameters),
+                                _command   (rhs._command   ),
+                                _isPrefix  (rhs._isPrefix  ),
+                                _isCommand (rhs._isCommand )
+{
+}
+
 Message::~Message() {}
 
 Message::Message(std::string str, const User &usr) 
     : _isPrefix(false), _isCommand(false) {
     this->_parse(str, usr);
+}
+
+void							Message::setCommand( const std::string &command )
+{
+    _command = command;
 }
 
 const std::string				&Message::getCommand() const { return this->_command; }
