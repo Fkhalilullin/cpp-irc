@@ -107,12 +107,10 @@ class IRCServer
 		void    _NAMES  (const Message &msg, const User &user); // k
         void    _QUIT   ( const Message &msg, User **user );
         void    _KILL   ( const Message &msg, User **user );
+        void    _KICK   ( const Message &msg, const User &user );
 
         void    _TOPIC  (const Message &msg, const User &user);
         void    _INVITE (const Message &msg, const User &user);
-        // QUIT cmd -? -> JUST exit from server?
-
-        void _KICK(const Message &msg, const User &usr);
 };
 
 #endif

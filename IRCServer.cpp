@@ -137,12 +137,12 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             buf       += c_buf;
         }
     }
-    // std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
-    // std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
-    // std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    // // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
-    // std::cout << GRE << "msg     : " << END << buf << std::endl;
-    // std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
+    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
+    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
+    std::cout << GRE << "socket  : " << END << sockfd << std::endl;
+    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
+    std::cout << GRE << "msg     : " << END << buf << std::endl;
+    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (bytes == -1 ? false : true);
 }
@@ -170,12 +170,12 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
         total += bytes;
         bytesLeft -= bytes;
     }
-    // std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
-    // std::cout << YEL << "------------SENDED------------" << END << std::endl;
-    // std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
-    // std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
-    // std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
+    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
+    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
+    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
 }
 
@@ -233,12 +233,15 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    *user = &it->second;
 
-    _QUIT(msg, &user);
-    if (user == NULL)
-        return ;
-    _KILL(msg, &user);
-    if (user == NULL)
-        return ;
+    if (user->isPassworded() && user->isLogged())
+    {
+        _QUIT(msg, &user);
+        if (user == NULL)
+            return ;
+        _KILL(msg, &user);
+        if (user == NULL)
+            return ;
+    }
 
     _CAP (msg, *user);
     _PASS(msg, *user);
@@ -255,8 +258,8 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
         _PART   (msg, *user);
         _LIST   (msg, *user);
         _OPER   (msg, *user);
-        if (utils::toUpper(msg.getCommand()) == "NAMES")
-            _NAMES  (msg, *user);
+        _KICK   (msg, *user);
+        _NAMES  (msg, *user);
         _TOPIC  (msg, *user);
         _INVITE (msg, *user);
     }
@@ -625,7 +628,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 		}
 		
 		if (tmp_param[0] == '#' || tmp_param[0] == '&') {
-			tmp_param.erase(0, 1);
+			// tmp_param.erase(0, 1);
 			params.push_back(tmp_param);
 		}
 		else {
@@ -711,7 +714,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 
 
-			to_send = ":" + usr.getNickname() + " JOIN :#" + ch_it->second.getName(); // updated 17.10
+			to_send = ":" + usr.getNickname() + " JOIN :" + ch_it->second.getName(); // updated 17.10
 
 			// std::string to_send = "welcome to " + ch_it->second.getName() + " group\n";
 			// to_send += "the topic of the channel is " + ch_it->second.getTopic();
@@ -755,8 +758,8 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			this->_send(usr.getSocket(), to_send);
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 
-			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :#" + new_ch.getName(); 											// IMYA SERVERA
-			to_send = ":" + usr.getNickname() + " JOIN :#" + new_ch.getName();
+			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :" + new_ch.getName(); 											// IMYA SERVERA
+			to_send = ":" + usr.getNickname() + " JOIN :" + new_ch.getName();
 			this->_send(usr.getSocket(), to_send);
 			this->_NAMES(msg, usr);
 		}
@@ -796,7 +799,7 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 		}
 		else {
 			tmp_param = msg.getParamets()[i];
-			tmp_param.erase(0, 1);
+			// tmp_param.erase(0, 1);
 			params.push_back(tmp_param);
 		}
 	}
@@ -820,7 +823,7 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 				// std::cout << usr.getNickname() + " leaves channel " + ch_it->first << std::endl;
 				// _send(usr.getSocket(), to_send);
 
-				to_send = ":" + usr.getNickname() + " PART :#" + ch_it->first;																	// vivod klientu
+				to_send = ":" + usr.getNickname() + " PART :" + ch_it->first;																	// vivod klientu
 				// this->_send(usr.getSocket(), to_send); // to user 
 
 				this->_sendToChannel(ch_it->first, to_send); // 																			+ iskluchenie usera
@@ -944,7 +947,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
 
     buf_string = msg.getParamets()[0];
     if (buf_string[0] == '#') {
-        buf_string.erase(0,1);
+        // buf_string.erase(0,1);
     }
     else {
         buf = ":" + this->_hostname  
@@ -963,7 +966,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
             ch_it->second.setTopic(msg.getParamets()[1]);
 
             buf = ":" + user.getNickname()
-                      + " TOPIC" + " #" 
+                      + " TOPIC"
                       + buf_string 
                       + " :" 
                       + ch_it->second.getTopic();
@@ -975,7 +978,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
             buf = ":" + this->_hostname  
                   + " 331 " 
                   + user.getNickname() 
-                  + " #" 
+                  + " " 
                   + buf_string 
                   + " :No topic is set";
             _send(user.getSocket(), buf);
@@ -985,7 +988,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
             buf = ":" + this->_hostname  
                   + " 332 " 
                   + user.getNickname() 
-                  + " #" 
+                  + " " 
                   + buf_string 
                   + " :"
                   + ch_it->second.getTopic();
@@ -996,7 +999,7 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
         buf =  ":" + this->_hostname  
                   + " 403 " 
                   + user.getNickname() 
-                  + " #" 
+                  + " " 
                   + buf_string 
                   + " :No such channel";
         _send(user.getSocket(), buf);
@@ -1011,8 +1014,8 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	std::string buf;
     std::vector<std::string> buf_string;
 
-    // if (utils::toUpper(msg.getCommand()) != "NAMES")
-        // return ;
+    if (utils::toUpper(msg.getCommand()) != "NAMES")
+        return ;
 	
 	// if (_channels.empty())
 	// 	return ;
@@ -1020,7 +1023,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
         if (!buf_string.empty() && buf_string[i][0] == '#') {
-            buf_string[i].erase(0, 1);
+            // buf_string[i].erase(0, 1);
         }
         else
             buf_string.pop_back();
@@ -1035,9 +1038,10 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 				std::map<std::string, User*>::const_iterator ch_us_it; 
 				std::map<std::string, User*>::const_iterator ch_chops_it;
 				ch_us_it = ch_it->second.getUsers().begin();
+                 std::cerr << BLU << user.getNickname() << END << std::endl;
 				message =":" + this->_hostname 
                              + " 353 " + user.getNickname() 
-							 + " = #"
+							 + " = "
 							 + ch_it->second.getName() 
 						     + " :";
 				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
@@ -1050,7 +1054,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 				_send(user.getSocket(), message + buf);
                 message = ":" + this->_hostname 
                               + " 366 "  + user.getNickname() 
-                              + " #"
+                              + " "
                               + ch_it->second.getName() 
                               + " :End of /NAMES list";
                 _send(user.getSocket(), message);
@@ -1058,7 +1062,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
             else {
                 message = ":" + this->_hostname 
                               + " 366 "  + user.getNickname() 
-                              + " #"
+                              + " "
                               + buf_string[i]
                               + " :End of /NAMES list";
                 _send(user.getSocket(), message);
@@ -1067,33 +1071,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	}
 }
 
-void IRCServer::_KICK(const Message &msg, const User &usr) {
-	// Команда: KICK
-	// Параметры: <channel> <user> [<comment>]
-    // Command: KICK
-    // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
-
-	std::string str_channel = msg.getParamets()[0]; // true??
-	std::string str_user = msg.getParamets()[1]; // true??
-
-    if (utils::toUpper(msg.getCommand()) != "KICK")
-        return ;
-
-	// channel exists?
-	std::map<std::string, Channel>::iterator ch_it;
-	ch_it = this->_channels.begin();
-	// if (ch_it != this->_channels.end())
-		//
-	// if (ch_it->second._users.find(str_user))
-		// ch_it->second.removeUser(str_user);
-		// will socket of user deleted?
-	
-
-	// else
-		// no channel
-}
-
-void IRCServer::_INVITE (const Message &msg, const User &user) {
+void IRCServer::_INVITE(const Message &msg, const User &user) {
 
 	// Команда: INVITE
 	// Параметры: <nickname> <channel>
@@ -1115,7 +1093,7 @@ void IRCServer::_INVITE (const Message &msg, const User &user) {
 
     buf_string = msg.getParamets()[1];
     if (buf_string[0] == '#') {
-        buf_string.erase(0,1);
+        // buf_string.erase(0,1);
     }
     else {
         return ;
@@ -1130,10 +1108,8 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     std::map<std::string, Channel>::const_iterator  cit;
     std::map<std::string, User*>::  const_iterator  uit;
 
-    std::cerr << BLU << msg.getCommand() << END << std::endl;
     if (utils::toUpper(msg.getCommand()) != "QUIT")
         return ;
-    std::cerr << BLU << "DONE" << END << std::endl;
     if (msg.getParamets().empty())
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
     else
@@ -1193,4 +1169,65 @@ void IRCServer::_KILL( const Message &msg, User **user )
     User tmp;
     tmp.setNickname(_hostname);
     _QUIT(Message(buf, tmp), &killedUser);
+}
+
+void IRCServer::_KICK( const Message &msg, const User &user )
+{
+    std::string                                     buf;
+    // std::map<std::string, Channel>::const_iterator  cit;
+    // std::map<std::string, User*>::  const_iterator  uit;
+
+    if (utils::toUpper(msg.getCommand()) != "KICK")
+        return ;
+    if (msg.getParamets().size() < 2)
+    {
+        buf = ":" + _hostname + " 461 KILL :Not enough parameters";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    {
+        std::cerr << BLU << it->first << END << std::endl;
+    }
+    if (_channels.find(msg.getParamets()[0]) == _channels.end())
+    {
+        buf = ":" + _hostname + " 403 " + user.getNickname() + " "
+            + msg.getParamets()[0] + " :No such channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    Channel &channel = _channels.find(msg.getParamets()[0])->second;
+    if (channel.getUsers().find(user.getNickname()) == channel.getUsers().end())
+    {
+        buf = ":" + _hostname + " 442 "
+            + channel.getName() + " :You're not on that channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (channel.getChops().find(user.getNickname()) == channel.getChops().end())
+    {
+        buf = ":" + _hostname + " 482 " + user.getNickname() + " "
+            + channel.getName() + " :You're not channel operator";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    if (channel.getUsers().find(msg.getParamets()[1]) == channel.getUsers().end())
+    {
+        buf = ":" + _hostname + " 441 " + msg.getParamets()[1] + " "
+            + channel.getName() + " :They aren't on that channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+    buf = ":" + user.getNickname() + " KICK "
+        + msg.getParamets()[0] + " " + msg.getParamets()[1];
+    _send(channel.getUsers().find(msg.getParamets()[1])->second->getSocket(), buf);
+    // removing user
+    channel.removeUser(msg.getParamets()[1]);
+    // removing channel
+    if (channel.getUsers().size() == 0)
+    {
+        _channels.erase(channel.getName());
+        return ;
+    }
+    _sendToChannel(msg.getParamets()[0], buf, msg.getParamets()[1]);
 }
