@@ -117,7 +117,7 @@ void	Channel::removeUser(std::string rem_name) { // add here username //  add Us
 	
 	this->_users.erase(rem_name);
 	this->_chops.erase(rem_name); // if he wasnt a chop?
-	std::cout << rem_name << " was banned and added to black list" << std::endl; // add here red color
+	// std::cout << rem_name << " was banned and added to black list" << std::endl; // add here red color
 
 }
 
