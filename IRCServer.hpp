@@ -81,7 +81,11 @@ class IRCServer
         void    _addUser   ( int sockfd         );
         void    _addUser   ( const User &user   );
         void    _removeUser( int sockfd         );
+        void    _removeUser( const std::string &nick );
         bool    _isCorrectNick( const std::string &nick );
+        void    _sendToChannel( const std::string &channel,
+                                const std::string &buf,
+                                const std::string &nick = "" );
 
         // Begin CMD
 
@@ -101,11 +105,14 @@ class IRCServer
 		void    _OPER   (const Message &msg); // k
 		void    _LIST   (const Message &msg, const User &user) const; //const;
 		void    _NAMES  (const Message &msg, const User &user); // k
+        void    _QUIT   ( const Message &msg, User **user );
+        void    _KILL   ( const Message &msg, User **user );
 
+        void    _TOPIC  (const Message &msg, const User &user);
+        void    _INVITE (const Message &msg, const User &user);
         // QUIT cmd -? -> JUST exit from server?
 
         void _KICK(const Message &msg, const User &usr);
-        void _INVITE(const Message &msg);
 };
 
 #endif
