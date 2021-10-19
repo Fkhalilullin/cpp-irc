@@ -837,6 +837,13 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 
 				this->_sendToChannel(ch_it->first, to_send); // 																			+ iskluchenie usera
 				ch_it->second.removeUser(usr.getNickname());
+
+				// if group is empty - del it
+				if (ch_it->second.getUsers().empty()) {
+					// need i send to all that group is deleted
+					// std::cout << "NEED TO DEL GROUP" << std::endl; // del
+					this->_channels.erase(ch_it->first);
+				}
 			}
 			else { // no this user in group
 				to_send = "442 " + usr.getNickname() + " " + params[i] + " "  + ":You're not on that channel";
