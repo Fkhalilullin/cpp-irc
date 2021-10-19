@@ -991,6 +991,9 @@ void IRCServer::_INVITE (const Message &msg, const User &user) {
 
 	// Команда: INVITE
 	// Параметры: <nickname> <channel>
+    std::map<std::string, Channel>::iterator ch_it;
+    std::map<std::string, User*>::const_iterator  us_ch_it;
+    std::multimap<std::string, User>::iterator     us_it;
     std::string buf;
     std::string buf_string;
 
@@ -1002,7 +1005,7 @@ void IRCServer::_INVITE (const Message &msg, const User &user) {
                   + " 461 " 
                   + user.getNickname() 
                   + " " 
-                  + "TOPIC :Not enough parameters";
+                  + "INVITE :Not enough parameters";
         _send(user.getSocket(), buf);
         return ;
     }
@@ -1014,6 +1017,66 @@ void IRCServer::_INVITE (const Message &msg, const User &user) {
     else {
         return ;
     }
+
+    // if (_channels.empty())
+    //     return ;
     
-    
+    us_it = this->_users.find(msg.getParamets()[0]);
+    if (us_it == this->_users.end() || _channels.empty()) {
+        buf = ":" + this->_hostname  
+                  + " 401 " 
+                  + user.getNickname() 
+                  + " " 
+                  + msg.getParamets()[0]
+                  + " :No such nick or channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
+
+    ch_it = this->_channels.begin();
+    // ch_it = ch_it->second.getUsers().find(msg.getParamets()[0])
+
+    us_ch_it = ch_it->second.getUsers().find(user.getNickname());
+    if (us_ch_it != ch_it->second.getUsers().end()) {
+        us_ch_it = ch_it->second.getUsers().find(msg.getParamets()[0]);
+        if (us_ch_it != ch_it->second.getUsers().end()) {
+             buf = ":" + this->_hostname  
+                  + " 443 " 
+                  + user.getNickname() 
+                  + " " 
+                  + msg.getParamets()[0]
+                  + " :is already on channel"
+                  + " #"
+                  + buf_string;
+            _send(user.getSocket(), buf);
+        }
+        else {
+            buf = ":" + this->_hostname  
+                  + " 341 " 
+                  + user.getNickname() 
+                  + " " 
+                  + msg.getParamets()[0]
+                  + " #"
+                  + buf_string;
+            _send(user.getSocket(), buf);
+
+            buf =":" + user.getNickname()
+                      + " INVITE "
+                      +  msg.getParamets()[0]
+                      + " :" 
+                      + "#" 
+                      + buf_string;
+            _send(us_it->second.getSocket(), buf);
+        }
+    }
+    else {
+        buf = ":" + this->_hostname  
+                  + " 442 " 
+                  + user.getNickname() 
+                  + " #" 
+                  + buf_string
+                  + " :You're not on that channel";
+        _send(user.getSocket(), buf);
+        return ;
+    }
 }
