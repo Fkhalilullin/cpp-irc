@@ -510,22 +510,26 @@ void    IRCServer::_NICK( const Message &msg, User **user )
     _addUser(copy);
     User    &newUser = _users.find(newNick)->second;
 
-    // removing from channels
-    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
-    {
-        Channel &channel = chit->second;
+    if (oldNick != "") {
+        // removing from channels
+        for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+        {
+            Channel &channel = chit->second;
 
-        // is chop?
-        if (channel.removeChop(oldNick))
-            channel.addChop(newUser);
-        // is user
-        if (channel.removeUser(oldNick))
-            channel.addUser(newUser);
+            // is chop?
+            if (channel.removeChop(oldNick))
+                channel.addChop(newUser);
+            // is user
+            if (channel.removeUser(oldNick))
+            {
+                std::cout << "user added???" << std::endl;
+                channel.addUser(newUser);
+            }
+        }
+        // is server operator
+        if (_operators.erase(oldNick))
+            _operators.insert(std::make_pair(newNick, &newUser));
     }
-    // is server operator
-    if (_operators.erase(oldNick))
-        _operators.insert(std::make_pair(newNick, &newUser));
-
 
     if (oldNick.empty())
         buf = "NICK " + newNick;
@@ -1203,7 +1207,6 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
                   + " "
                   + msg.getParamets()[0]
                   + " :is already on channel"
-                  + " #"
                   + buf_string;
             _send(user.getSocket(), buf);
         }
@@ -1213,7 +1216,7 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
                   + user.getNickname()
                   + " "
                   + msg.getParamets()[0]
-                  + " #"
+                  + " "
                   + buf_string;
             _send(user.getSocket(), buf);
 
@@ -1221,7 +1224,6 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
                       + " INVITE "
                       +  msg.getParamets()[0]
                       + " :"
-                      + "#"
                       + buf_string;
             _send(us_it->second.getSocket(), buf);
         }
