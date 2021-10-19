@@ -111,14 +111,21 @@ void	Channel::setTopic(std::string topic)
 	_topic = topic;
 }
 
-void	Channel::removeUser(std::string rem_name) { // add here username //  add User // ??
+bool	Channel::removeUser(std::string rem_name)
+{
+	bool res = false;
 
-	// this->_ban_list.push_back(rem_name); replace ti to "ban user"
-	
-	this->_users.erase(rem_name);
-	this->_chops.erase(rem_name); // if he wasnt a chop?
-	// std::cout << rem_name << " was banned and added to black list" << std::endl; // add here red color
+	if (this->_users.erase(rem_name))
+		res = true;
+	this->_chops.erase(rem_name);
+	return (true);
+}
 
+bool	Channel::removeChop(std::string nick)
+{
+	if (this->_chops.erase(nick))
+		return (true);
+	return (false);
 }
 
 void Channel::change_topic(std::string new_topic) {

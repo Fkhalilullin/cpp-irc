@@ -393,6 +393,41 @@ void    IRCServer::_PASS( const Message &msg, User &user )
     }
 }
 
+void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::string &buf ) const
+{
+    std::vector<std::string>                        alreadySent;
+    std::map<std::string, Channel>::const_iterator  chit;
+    std::map<std::string, User*>  ::const_iterator  uit;
+    std::vector<std::string>      ::const_iterator  vit;
+
+
+    // passing through all channels
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+    {
+        const Channel &channel = chit->second;
+
+        std::cout << BLU << channel.getName() << END << std::endl;
+        // found a user by nick in the channel ?
+        if (channel.getUsers().find(nick) != channel.getUsers().end())
+        {
+            std::cout << BLU << "Нашел ник в канале" << END << std::endl;
+            // passing through all users from channel
+            for (uit = channel.getUsers().begin(); uit != channel.getUsers().end(); ++uit)
+            {
+                const User &user = *uit->second;
+
+                std::cout << BLU << "\t" << user.getNickname() << END << std::endl;
+                vit = std::find(alreadySent.begin(), alreadySent.end(), user.getNickname());
+                if (vit == alreadySent.end() && user.getNickname() != nick)
+                {
+                    alreadySent.push_back(user.getNickname());
+                    _send(user.getSocket(), buf);
+                }
+            }
+        }
+    }
+}
+
 void    IRCServer::_sendToChannel( const std::string &channel,
                         const std::string &buf,
                         const std::string &nick /* = "" */ )
@@ -442,7 +477,8 @@ bool    IRCServer::_isCorrectNick( const std::string &nick )
 
 void    IRCServer::_NICK( const Message &msg, User **user )
 {
-    std::string	buf;
+    std::string                                 buf;
+    std::map<std::string, Channel>::iterator    chit;
 
     if (utils::toUpper(msg.getCommand()) != "NICK")
         return ;
@@ -464,17 +500,39 @@ void    IRCServer::_NICK( const Message &msg, User **user )
         _send((*user)->getSocket(), buf);
         return ;
     }
+    // main command processing
     std::string oldNick((*user)->getNickname());
+    std::string newNick(msg.getParamets()[0]  );
     User        copy(**user);
 
-    copy.setNickname(msg.getParamets()[0]);
+    copy.setNickname(newNick);
     _removeUser((*user)->getSocket());
     _addUser(copy);
+    User    &newUser = _users.find(newNick)->second;
+
+    // removing from channels
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+    {
+        Channel &channel = chit->second;
+
+        // is chop?
+        if (channel.removeChop(oldNick))
+            channel.addChop(newUser);
+        // is user
+        if (channel.removeUser(oldNick))
+            channel.addUser(newUser);
+    }
+    // is server operator
+    if (_operators.erase(oldNick))
+        _operators.insert(std::make_pair(newNick, &newUser));
+
+
     if (oldNick.empty())
-        buf = "NICK " + copy.getNickname();
+        buf = "NICK " + newNick;
     else
-        buf = ":" + oldNick + " NICK :" + copy.getNickname();
-    (*user) = &(_users.find(copy.getNickname())->second);
+        buf = ":" + oldNick + " NICK :" + newNick;
+    _sendToJoinedChannels(newNick, buf);
+    (*user) = &(_users.find(newNick)->second);
     _send((*user)->getSocket(), buf);
 }
 

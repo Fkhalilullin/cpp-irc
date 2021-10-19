@@ -7,7 +7,7 @@
 
 #include <map>
 #include <string>
-// #include <string.h>
+#include <algorithm>
 #include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -83,6 +83,9 @@ class IRCServer
         void    _removeUser( int sockfd         );
         void    _removeUser( const std::string &nick );
         bool    _isCorrectNick( const std::string &nick );
+        void    _sendToJoinedChannels( const std::string &nick,
+                                       const std::string &buf ) const;
+
         void    _sendToChannel( const std::string &channel,
                                 const std::string &buf,
                                 const std::string &nick = "" );
