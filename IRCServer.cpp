@@ -78,11 +78,16 @@ void IRCServer::start()
             }
             catch (const std::exception& e)
             {
+                std::multimap<std::string, User>::iterator  it;
 
-                // _QUIT(Message())
-                close(i);
-                FD_CLR(i, &this->_client_fds);
-                _removeUser(i);
+                it = _users.begin();
+                while (it != _users.end() && it->second.getSocket() != i)
+                    it++;
+                User* user = &(it->second);
+                _QUIT(Message(std::string("QUIT :Remote host closed the connection"), *user), &user);
+                // close(i);
+                // FD_CLR(i, &this->_client_fds);
+                // _removeUser(i);
             }
             // command execution
             _execute(i, buf);
@@ -197,14 +202,23 @@ void    IRCServer::_removeUser( const std::string &nick )
     std::multimap<std::string, Channel>::iterator chit;
     std::multimap<std::string, User>   ::iterator uit;
 
+    // removing from _channels
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+        chit->second.removeUser(nick);
     // removing from _users
     uit = _users.find(nick);
     if (uit != _users.end())
         _users.erase(uit);
 
-    // removing from _channels
-    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
-        chit->second.removeUser(nick);
+    // removing channel
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit) {
+        if (chit->second.getUsers().empty()) {
+            this->_channels.erase(chit);
+            chit = _channels.begin();
+            if (chit == this->_channels.end())
+                return ;
+        }
+    }
 }
 
 void    IRCServer::_addUser(int sockfd)
@@ -1113,16 +1127,17 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 		for (int i = 0; i <  buf_string.size(); ++i) {
 			ch_it = this->_channels.find( buf_string[i]);
 			if (ch_it != _channels.end()) {
-				std::map<std::string, User*>::const_iterator ch_us_it;
-				std::map<std::string, User*>::const_iterator ch_chops_it;
+				std::map<std::string, User*>::const_iterator    ch_us_it;
+				std::vector<User>::const_iterator               ch_chops_it;
 				ch_us_it = ch_it->second.getUsers().begin();
 				message =":" + this->_hostname
                              + " 353 " + user.getNickname()
 							 + " = "
 							 + ch_it->second.getName()
 						     + " :";
-				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it) {
-					ch_chops_it = ch_it->second.getChops().find(ch_us_it->second->getNickname());
+				for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it)
+                {
+					ch_chops_it = ch_it->second.getChop(ch_us_it->second->getNickname());
 					if (ch_chops_it != ch_it->second.getChops().end())
 						buf += "@" + ch_us_it->second->getNickname() + " ";
 					else
@@ -1243,8 +1258,11 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
 void IRCServer::_QUIT( const Message &msg, User **user )
 {
     std::string                                     buf;
-    std::map<std::string, Channel>::const_iterator  cit;
+    std::map<std::string, Channel>::iterator        cit;
     std::map<std::string, User*>::  const_iterator  uit;
+
+
+    // std::cout << "BEFORE REMOVE SMTH" << std::endl;
 
     if (utils::toUpper(msg.getCommand()) != "QUIT")
         return ;
@@ -1252,6 +1270,8 @@ void IRCServer::_QUIT( const Message &msg, User **user )
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
     else
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + msg.getParamets()[0];
+    // std::cout << "MIDDLE ERRRR" << std::endl;
+
     for (cit = _channels.begin(); cit != _channels.end(); ++cit)
     {
         uit = cit->second.getUsers().find((*user)->getNickname());
@@ -1264,7 +1284,12 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     // removing the user
     close((*user)->getSocket());
     FD_CLR((*user)->getSocket(), &this->_client_fds);
+
     _removeUser((*user)->getNickname());
+
+
+
+
     *user = NULL;
 }
 
@@ -1342,7 +1367,7 @@ void IRCServer::_KICK( const Message &msg, const User &user )
         _send(user.getSocket(), buf);
         return ;
     }
-    if (channel.getChops().find(user.getNickname()) == channel.getChops().end())
+    if (channel.getChop(user.getNickname()) == channel.getChops().end())
     {
         buf = ":" + _hostname + " 482 " + user.getNickname() + " "
             + channel.getName() + " :You're not channel operator";

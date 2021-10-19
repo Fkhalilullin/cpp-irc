@@ -18,9 +18,11 @@ class Channel {
 		std::string	_name;
 		std::string	_topic;
 		userMap		_users;
-		userMap		_chops;
+		// userMap		_chops;
+		std::vector<User>		_chops;
 
-		
+
+
 	private:
 		Channel();
 
@@ -29,7 +31,7 @@ class Channel {
 		~Channel();
 
 		void addUser(User &_user); // ok
-		void addChop(User &_user); // ok 
+		void addChop(User &_user); // ok
 		bool removeUser(std::string _nickname); // ok
 		bool removeChop(std::string nick);
 		// REMOVE USER != BAN USER -> make func ban user
@@ -37,8 +39,8 @@ class Channel {
 		const std::string	& getName () const;
 		const std::string	& getTopic() const;
 		const userMap		& getUsers() const;
-		const userMap		& getChops() const;
-		
+		const std::vector<User>		& getChops() const;
+
 		bool				  setName ( std::string name  ); // checking the name for validity
 		void				  setTopic( std::string topic );
 
@@ -46,8 +48,8 @@ class Channel {
 		// NEW FUNCS //
 		int _limit_users; // ok // make it const
 		std::vector<std::string> _ban_list; // ok
-		
-		void channel_info(); //ok 
+
+		void channel_info(); //ok
 		void change_topic(std::string new_topic); // ok // gde budet funk?
 		// void change name of channel (channel, new_channel name) // na servere?
 
@@ -59,7 +61,10 @@ class Channel {
 		// ПРОВЕРКА ИМеНИ КАНАЛА С СУЩЕСТВУЮЩИМИ ЮЗЕРАМИ
 
 		std::string _pass;
-		// make set_pass 
+		// make set_pass
+
+
+		std::vector<User>::const_iterator const getChop(std::string const &nick) const;
 
 
 

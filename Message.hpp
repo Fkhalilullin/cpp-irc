@@ -11,7 +11,7 @@
 class Message {
 public:
 	Message(std::string, const User& );
-	Message( const Message &rhs ); 
+	Message( const Message &rhs );
 	~Message();
 
 	const std::string				&getPrefix() const;
