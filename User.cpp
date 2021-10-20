@@ -67,3 +67,18 @@ bool	User::isPassworded() const
 const std::string User::getNickname() const {
 	return this->_nickname;
 }
+
+void	User::clearBuffer()
+{
+	_buffer.clear();
+}
+
+void	User::appendBuffer(const std::string &data)
+{
+	_buffer += data;
+}
+
+const std::string &User::getBuffer() const
+{
+	return (_buffer);
+}

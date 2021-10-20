@@ -18,6 +18,7 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
 
 		// zanulentie fd set
 
+    signal(SIGPIPE, SIG_IGN);
 }
 
 IRCServer::~IRCServer() {}
@@ -30,6 +31,7 @@ void IRCServer::_accept()
     int new_fd = accept(_listener, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
     if (new_fd == -1)
         throw std::invalid_argument(strerror(errno));
+    fcntl(_listener, F_SETFL, O_NONBLOCK);
     _addUser(new_fd);
     if (_max_fd < new_fd)
         _max_fd = new_fd;
@@ -39,12 +41,12 @@ void IRCServer::_accept()
 
 void IRCServer::start()
 {
+    std::multimap<std::string, User>::iterator  uit;
+
 	_listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
 	if (_listener < 0)
 		throw std::invalid_argument(strerror(errno));
     _max_fd = _listener;
-
-    fcntl(_listener, F_SETFL, O_NONBLOCK);
 
     int yes = 1;
     setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
@@ -70,24 +72,27 @@ void IRCServer::start()
 			if (!FD_ISSET(i, &select_fds) || i == _listener)
                 continue ;
             std::string buf;
+            uit = _getUser(i);
 
             // receiving data
             try
             {
-                _recv(i, buf);
+                if ( _recv(i, buf) )
+                {
+                    uit->second.appendBuffer(buf);
+                    buf = uit->second.getBuffer();
+                    uit->second.clearBuffer();
+                }
+                else
+                {
+                    uit->second.appendBuffer(buf);
+                    continue ;
+                }
             }
             catch (const std::exception& e)
             {
-                std::multimap<std::string, User>::iterator  it;
-
-                it = _users.begin();
-                while (it != _users.end() && it->second.getSocket() != i)
-                    it++;
-                User* user = &(it->second);
+                User* user = &(uit->second);
                 _QUIT(Message(std::string("QUIT :Remote host closed the connection"), *user), &user);
-                // close(i);
-                // FD_CLR(i, &this->_client_fds);
-                // _removeUser(i);
             }
             // command execution
             _execute(i, buf);
@@ -109,6 +114,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     char    c_buf[512];
 	int     bytesLeft;
 	int     bytes = 1;
+    int     res;
 
     buf.clear();
     while (buf.find(_delimeter) == std::string::npos
@@ -116,13 +122,23 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     {
         memset(c_buf, 0, sizeof(c_buf));
         bytes = recv(sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
+        std::cerr << BLU << c_buf << END;
         if (bytes < 0)
         {
+            if (errno == EAGAIN)
+                return (false);
+
             std::cerr << RED << strerror(errno) << END;
+            std::cerr << BLU << "bytes recv: " << bytes << END << std::endl;
             throw std::exception();
         }
         if (bytes == 0)
+        {
+            // std::cerr << BLU << c_buf << END;
+            std::cerr << BLU << "bytes recv: " << bytes << END << std::endl;
+            std::cerr << BLU << strerror(errno) << END;
             throw std::exception();
+        }
 
         bytesLeft = std::string(c_buf).find(_delimeter);
         if (bytesLeft == std::string::npos)
@@ -144,6 +160,10 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             buf       += c_buf;
         }
     }
+    if (buf.find(_delimeter) == -1)
+        res = false;
+    else
+        res = true;
     std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
     std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
     std::cout << GRE << "socket  : " << END << sockfd << std::endl;
@@ -151,7 +171,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     std::cout << GRE << "msg     : " << END << buf << std::endl;
     std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
-    return (bytes == -1 ? false : true);
+    return (res);
 }
 
 bool	IRCServer::_send( int sockfd, const std::string &buf ) const
@@ -462,6 +482,16 @@ void    IRCServer::_sendToChannel( const std::string &channel,
         if (it->first != nick)
             _send(it->second->getSocket(), buf);
     }
+}
+
+std::multimap<std::string, User>::iterator    IRCServer::_getUser( int sockfd )
+{
+    std::multimap<std::string, User>::iterator  it;
+
+    it = _users.begin();
+    while (it != _users.end() && it->second.getSocket() != sockfd)
+        it++;
+    return (it);
 }
 
 bool    IRCServer::_isCorrectNick( const std::string &nick )

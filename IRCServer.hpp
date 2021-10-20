@@ -66,6 +66,7 @@ class IRCServer
         std::map<std::string, User*>     _operators;
         std::map<std::string, Channel>   _channels;
         std::string                      _delimeter;
+        std::string                      _buffer;
 
     public:
         explicit IRCServer( unsigned int port, std::string pass );
@@ -89,6 +90,7 @@ class IRCServer
         void    _sendToChannel( const std::string &channel,
                                 const std::string &buf,
                                 const std::string &nick = "" );
+        std::multimap<std::string, User>::iterator    _getUser( int sockfd );
 
         // Begin CMD
 

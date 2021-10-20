@@ -10,7 +10,7 @@ class User {
 		User();
 		User( const User &rhs );
 		~User();
-		
+
 
 		//private:
 		std::string _nickname;
@@ -20,7 +20,8 @@ class User {
 		bool		_password;
 		bool		_logged; // orig nick
 		int			_socket;
-		
+		std::string _buffer;
+
 	public:
 		void	setNickname(const std::string &nick);
 		void	setUsername(const std::string &uname);
@@ -34,6 +35,9 @@ class User {
 		bool	isPassworded() const;
 		const std::string getNickname() const;
 
+		void	clearBuffer();
+		void	appendBuffer(const std::string &data);
+		const std::string &getBuffer() const;
 };
 
 
