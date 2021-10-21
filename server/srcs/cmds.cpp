@@ -83,7 +83,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	}
 }
 
-void    IRCServer::_CAP( const Message &msg, const User &user ) const
+void    IRCServer::_CAP( const Message &msg, const User &user )
 {
     std::string	buf;
 
@@ -293,7 +293,7 @@ void    IRCServer::_USER( const Message &msg, User &user )
     }
 }
 
-void    IRCServer::_PING( const Message &msg, const User &user ) const
+void    IRCServer::_PING( const Message &msg, const User &user )
 {
     std::string	buf;
 
@@ -659,7 +659,7 @@ void    IRCServer::_OPER( const Message &msg, const User &user )
     _send(user.getSocket(), buf);
 }
 
-void IRCServer::_LIST( const Message &msg, const User &user ) const
+void IRCServer::_LIST( const Message &msg, const User &user )
 {
     std::map<std::string, Channel>::const_iterator  it;
     std::string                                     buf;

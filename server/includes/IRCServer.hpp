@@ -76,8 +76,8 @@ class IRCServer
 
     private:
         void    _accept    ();
-        bool    _recv      ( int sockfd,       std::string &buf ) const;
-        bool    _send      ( int sockfd, const std::string &buf ) const;
+        bool    _recv      ( int sockfd,       std::string &buf );
+        bool    _send      ( int sockfd, const std::string &buf );
         void    _exec      ( const Message &msg );
         void    _addUser   ( int sockfd         );
         void    _addUser   ( const User &user   );
@@ -85,7 +85,7 @@ class IRCServer
         void    _removeUser( const std::string &nick );
         bool    _isCorrectNick( const std::string &nick );
         void    _sendToJoinedChannels( const std::string &nick,
-                                       const std::string &buf ) const;
+                                       const std::string &buf );
 
         void    _sendToChannel( const std::string &channel,
                                 const std::string &buf,
@@ -96,19 +96,19 @@ class IRCServer
 
 		void    _execute( int sockfd, const std::string &buf );
         void    _PRIVMSG( const Message &msg, const User &usr);
-        void    _CAP    ( const Message &msg, const User &user ) const;
+        void    _CAP    ( const Message &msg, const User &user );
         void    _PASS   ( const Message &msg, User &user );
         void    _NICK   ( const Message &msg, User **user );
         void    _USER   ( const Message &msg, User &user );
 
-		void    _PING   ( const Message &msg, const User &user ) const;
+		void    _PING   ( const Message &msg, const User &user );
         void    _OPER   ( const Message &msg, const User &user );
 
 		void    _NOTICE (const Message &msg, const User &usr); // k
 		void    _JOIN   (const Message &msg, User &usr); // bez const	// k
 		void    _PART   (const Message &msg, const User &usr); // k
 		void    _OPER   (const Message &msg); // k
-		void    _LIST   (const Message &msg, const User &user) const; //const;
+		void    _LIST   (const Message &msg, const User &user);
 		void    _NAMES  (const Message &msg, const User &user); // k
         void    _QUIT   ( const Message &msg, User **user );
         void    _KILL   ( const Message &msg, User **user );

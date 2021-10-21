@@ -23,6 +23,7 @@ class User {
 		bool		_logged; // orig nick
 		int			_socket;
 		std::string _buffer;
+		std::string _sendBuffer;
 
 	public:
 		void	setNickname(const std::string &nick);
@@ -41,9 +42,11 @@ class User {
 		bool	isUser      () const;
 		const std::string getNickname() const;
 
-		void	clearBuffer();
-		void	appendBuffer(const std::string &data);
-		const std::string &getBuffer() const;
+		void				clearBuffer		(						);
+		void				appendBuffer	(const std::string &data);
+		const std::string	&getBuffer		(						) const;
+		void				setSendBuffer	(const std::string &data);
+		const std::string	&getSendBuffer	(						) const;
 };
 
 

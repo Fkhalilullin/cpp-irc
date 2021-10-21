@@ -102,3 +102,13 @@ const std::string &User::getBuffer() const
 {
 	return (_buffer);
 }
+
+void    User::setSendBuffer(const std::string &data)
+{
+    _sendBuffer = data;
+}
+
+const std::string   &User::getSendBuffer() const
+{
+    return (_sendBuffer);
+}
