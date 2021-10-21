@@ -14,7 +14,7 @@
 #include <sys/time.h>
 #include <exception>
 #include <sys/time.h>
-
+#include <csignal>
 
 #include "User.hpp"
 #include "Channel.hpp"

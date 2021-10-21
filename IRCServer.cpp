@@ -122,23 +122,16 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     {
         memset(c_buf, 0, sizeof(c_buf));
         bytes = recv(sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
-        std::cerr << BLU << c_buf << END;
         if (bytes < 0)
         {
             if (errno == EAGAIN)
                 return (false);
 
             std::cerr << RED << strerror(errno) << END;
-            std::cerr << BLU << "bytes recv: " << bytes << END << std::endl;
             throw std::exception();
         }
         if (bytes == 0)
-        {
-            // std::cerr << BLU << c_buf << END;
-            std::cerr << BLU << "bytes recv: " << bytes << END << std::endl;
-            std::cerr << BLU << strerror(errno) << END;
             throw std::exception();
-        }
 
         bytesLeft = std::string(c_buf).find(_delimeter);
         if (bytesLeft == std::string::npos)
@@ -269,6 +262,8 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     Message msg(buf, it->second);
     User    *user = &it->second;
 
+    if (_password.empty() && !user->isPassworded())
+	    user->switchPassword();
     if (user->isPassworded() && user->isLogged())
     {
         _QUIT(msg, &user);
@@ -440,17 +435,14 @@ void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::st
     {
         const Channel &channel = chit->second;
 
-        std::cout << BLU << channel.getName() << END << std::endl;
         // found a user by nick in the channel ?
         if (channel.getUsers().find(nick) != channel.getUsers().end())
         {
-            std::cout << BLU << "Нашел ник в канале" << END << std::endl;
             // passing through all users from channel
             for (uit = channel.getUsers().begin(); uit != channel.getUsers().end(); ++uit)
             {
                 const User &user = *uit->second;
 
-                std::cout << BLU << "\t" << user.getNickname() << END << std::endl;
                 vit = std::find(alreadySent.begin(), alreadySent.end(), user.getNickname());
                 if (vit == alreadySent.end() && user.getNickname() != nick)
                 {
@@ -526,6 +518,7 @@ void    IRCServer::_NICK( const Message &msg, User **user )
 
     if (utils::toUpper(msg.getCommand()) != "NICK")
         return ;
+
     if (msg.getParamets().size() == 0)
     {
         buf = "431 :No nickname given";
@@ -834,7 +827,6 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			this->_sendToChannel(ch_it->second.getName(), to_send); // + iskluchenie
 			Message namesMsg(msg);
             namesMsg.setCommand("NAMES");
-            // std::cerr << BLU <<  << END << std::endl;
 			this->_NAMES(namesMsg, usr);
 
 		}
@@ -1138,7 +1130,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
-	std::cerr << BLU << "SMTH===" << END << std::endl;
 	// if (_channels.empty())
 	// 	return ;
 
@@ -1377,10 +1368,6 @@ void IRCServer::_KICK( const Message &msg, const User &user )
         buf = ":" + _hostname + " 461 KILL :Not enough parameters";
         _send(user.getSocket(), buf);
         return ;
-    }
-    for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-    {
-        std::cerr << BLU << it->first << END << std::endl;
     }
     if (_channels.find(msg.getParamets()[0]) == _channels.end())
     {
