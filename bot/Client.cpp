@@ -1,5 +1,9 @@
 #include "Client.hpp"
-#include "../includes/IRCServer.hpp"
+#include "../server/includes/User.hpp"
+#include "../server/includes/Message.hpp"
+#include "../server/includes/utils.hpp"
+#include <fstream>
+// #include "../server/includes/IRCServer.hpp"
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -64,6 +68,8 @@ void    Client::run()
         + "NICK " + std::string(_nick) + std::string("\r\n")
         + "USER myusernaaame * * *"               + std::string("\r\n");
     _send(buf);
+    User    usr;
+    usr.setNickname("bot");
     while (21)
     {
         try
@@ -86,15 +92,14 @@ void    Client::run()
             return ;
         }
 
-        User    usr;
-        usr.setNickname("bot");
         std::string msg_str;
+        std::string cmd_str;
         Message msg(buf, usr);
 
 
         if (utils::toUpper(msg.getCommand()) == "INVITE") {
             msg_str = "JOIN ";
-            if (!msg.getParamets().size() == 2) {
+            if (msg.getParamets().size() == 2) {
                 msg_str += msg.getParamets()[1];
                 _send(msg_str);
             }
@@ -102,64 +107,91 @@ void    Client::run()
                 continue ;
         }
         else if (utils::toUpper(msg.getCommand()) == "PRIVMSG") {
-            msg_str = "PRIVMSG ";
+            cmd_str = "PRIVMSG ";
             if (!msg.getParamets().empty()) {
-                if (msg.getParamets().back().find("zapuskaem") || 
-                    msg.getParamets().back().find("gusya") ||
-                    msg.getParamets().back().find("rabotyagi") ||
-                    msg.getParamets().back().find("запускаем") ||
-                    msg.getParamets().back().find("гуся") ||
-                    msg.getParamets().back().find("работяги") ||
-                    msg.getParamets().back().find("Zapuskaem") || 
-                    msg.getParamets().back().find("Gusya") ||
-                    msg.getParamets().back().find("Rabotyagi") ||
-                    msg.getParamets().back().find("Запускаем") ||
-                    msg.getParamets().back().find("Гуся") ||
-                    msg.getParamets().back().find("Работяги")) 
-                    {
+                if (msg.getParamets().back().find("zapuskaem") != -1|| 
+                    msg.getParamets().back().find("gusya") != -1||
+                    msg.getParamets().back().find("rabotyagi") != -1||
+                    msg.getParamets().back().find("запускаем") != -1||
+                    msg.getParamets().back().find("гуся") != -1||
+                    msg.getParamets().back().find("работяги") != -1||
+                    msg.getParamets().back().find("Zapuskaem") != -1 || 
+                    msg.getParamets().back().find("Gusya") != -1 ||
+                    msg.getParamets().back().find("Rabotyagi") != -1 ||
+                    msg.getParamets().back().find("Запускаем") != -1 ||
+                    msg.getParamets().back().find("Гуся") != -1 ||
+                    msg.getParamets().back().find("Работяги") != -1 )  {
                     for (int i = 0; i < msg.getParamets().size() - 1; ++i) 
-                        msg_str += msg.getParamets()[i] + " ";
-                    msg_str += std::string(":░░░░░░░░░░░░░░░░░░░░\n") +
-                                std::string("░░░░░ЗАПУСКАЕМ░░░░░░░\n") +
-                                std::string("░ГУСЯ░▄▀▀▀▄░РАБОТЯГИ░░\n") +
-                                std::string("▄███▀░◐░░░▌░░░░░░░░░\n") +
-                                std::string("░░░░▌░░░░░▐░░░░░░░░░\n") +
-                                std::string("░░░░▐░░░░░▐░░░░░░░░░\n") +
-                                std::string("░░░░▌░░░░░▐▄▄░░░░░░░\n") +
-                                std::string("░░░░▌░░░░▄▀▒▒▀▀▀▀▄\n") +
-                                std::string("░░░▐░░░░▐▒▒▒▒▒▒▒▒▀▀▄\n") + 
-                                std::string("░░░▐░░░░▐▄▒▒▒▒▒▒▒▒▒▒▀▄\n") + 
-                                std::string("░░░░▀▄░░░░▀▄▒▒▒▒▒▒▒▒▒▒▀▄\n") +
-                                std::string("░░░░░░▀▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▀▄\n") +
-                                std::string("░░░░░░░░░░░▌▌░▌▌░░░░░\n") + 
-                                std::string("░░░░░░░░░░░▌▌░▌▌░░░░░\n") +
-                                std::string("░░░░░░░░░▄▄▌▌▄▌▌░░░░░");
+                        cmd_str += msg.getParamets()[i] + " ";
+                    cmd_str += ":";
+                    std::ifstream fin;
+                    
+                    fin.open("gus.txt");
+                    if (!fin.is_open())
+                        continue ;
+                    std::string str;
+                    std::string buf;
+                    while (1) {
+                        buf = cmd_str;
+                        std::getline(fin, str);
+                        buf += str;
+                        _send(buf);
+                        usleep(1000);
+                        buf.clear();
+                        if (fin.eof())
+                            break;
+                    }
                 }
-                else if (msg.getParamets().back().find("Putin") ||
-                         msg.getParamets().back().find("putin") ||
-                         msg.getParamets().back().find("Путин") ||
-                         msg.getParamets().back().find("путин")) 
-                         {
+                else if (msg.getParamets().back().find("Putin") != -1 ||
+                         msg.getParamets().back().find("putin") != -1 || 
+                         msg.getParamets().back().find("Путин")  != -1||
+                         msg.getParamets().back().find("путин") != -1) {
                             for (int i = 0; i < msg.getParamets().size() - 1; ++i) 
-                                msg_str += msg.getParamets()[i] + " ";
-                            msg_str += std::string(":⣿⣿⣿⣿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n") +
-                                        std::string("⣿⣿⣿⣵⣿⣿⣿⠿⡟⣛⣧⣿⣯⣿⣝⡻⢿⣿⣿⣿⣿⣿⣿⣿\n") +
-                                        std::string("⣿⣿⣿⣿⣿⠋⠁⣴⣶⣿⣿⣿⣿⣿⣿⣿⣦⣍⢿⣿⣿⣿⣿⣿\n") +
-                                        std::string("⣿⣿⣿⣿⢷⠄⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣏⢼⣿⣿⣿⣿\n") + 
-                                        std::string("⢹⣿⣿⢻⠎⠔⣛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿\n") +
-                                        std::string("⢸⣿⣿⠇⡶⠄⣿⣿⠿⠟⡛⠛⠻⣿⡿⠿⠿⣿⣗⢣⣿⣿⣿⣿\n") +
-                                        std::string("⠐⣿⣿⡿⣷⣾⣿⣿⣿⣾⣶⣶⣶⣿⣁⣔⣤⣀⣼⢲⣿⣿⣿⣿\n") +
-                                        std::string("⠄⣿⣿⣿⣿⣾⣟⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⢟⣾⣿⣿⣿⣿\n") +
-                                        std::string("⠄⣟⣿⣿⣿⡷⣿⣿⣿⣿⣿⣮⣽⠛⢻⣽⣿⡇⣾⣿⣿⣿⣿⣿\n") +
-                                        std::string("⠄⢻⣿⣿⣿⡷⠻⢻⡻⣯⣝⢿⣟⣛⣛⣛⠝⢻⣿⣿⣿⣿⣿⣿\n") +
-                                        std::string("⠄⠸⣿⣿⡟⣹⣦⠄⠋⠻⢿⣶⣶⣶⡾⠃⡂⢾⣿⣿⣿⣿⣿⣿\n") +
-                                        std::string("⠄⠄⠟⠋⠄⢻⣿⣧⣲⡀⡀⠄⠉⠱⣠⣾⡇⠄⠉⠛⢿⣿⣿⣿\n") +
-                                        std::string("⠄⠄⠄⠄⠄⠈⣿⣿⣿⣷⣿⣿⢾⣾⣿⣿⣇⠄⠄⠄⠄⠄⠉⠉\n") +
-                                        std::string("⠄⠄⠄⠄⠄⠄⠸⣿⣿⠟⠃⠄⠄⢈⣻⣿⣿⠄⠄⠄⠄⠄⠄⠄\n") +
-                                        std::string("⠄⠄⠄⠄⠄⠄⠄⢿⣿⣾⣷⡄⠄⢾⣿⣿⣿⡄⠄⠄⠄⠄⠄⠄\n") +
-                                        std::string("⠄⠄⠄⠄⠄⠄⠄⠸⣿⣿⣿⠃⠄⠈⢿⣿⣿⠄⠄⠄⠄⠄⠄⠄");
+                        cmd_str += msg.getParamets()[i] + " ";
+                        cmd_str += ":";
+                        std::ifstream fin;
+                        
+                        fin.open("putin.txt");
+                        if (!fin.is_open())
+                            continue ;
+                        std::string str;
+                        std::string buf;
+                        while (1) {
+                            buf = cmd_str;
+                            std::getline(fin, str);
+                            buf += str;
+                            _send(buf);
+                            usleep(1000);
+                            buf.clear();
+                            if (fin.eof())
+                                break;
+                        }
                 }
-                _send(msg_str);
+                else if (msg.getParamets().back().find("Hydra") != -1 ||
+                         msg.getParamets().back().find("hydra") != -1 || 
+                         msg.getParamets().back().find("Гидра")  != -1||
+                         msg.getParamets().back().find("гидра") != -1) {
+                             for (int i = 0; i < msg.getParamets().size() - 1; ++i) 
+                        cmd_str += msg.getParamets()[i] + " ";
+                        cmd_str += ":";
+                        std::ifstream fin;
+                        
+                        fin.open("hydra.txt");
+                        if (!fin.is_open())
+                            continue ;
+                        std::string str;
+                        std::string buf;
+                        while (1) {
+                            buf = cmd_str;
+                            std::getline(fin, str);
+                            buf += str;
+                            _send(buf);
+                            usleep(1000);
+                            buf.clear();
+                            if (fin.eof())
+                                break;
+                        }
+                }
             }
             else
                 continue ;

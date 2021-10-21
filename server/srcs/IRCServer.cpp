@@ -121,6 +121,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
     {
         memset(c_buf, 0, sizeof(c_buf));
         bytes = recv(sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
+        std::cout << "bytes -> " << bytes << "\n";
         if (bytes < 0)
         {
             if (errno == EAGAIN)
