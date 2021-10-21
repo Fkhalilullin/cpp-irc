@@ -1,6 +1,3 @@
 .vscode
-*.o
-a.out
-test.cpp
-Client/objs/
-Client/client
+objs/
+irc

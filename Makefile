@@ -1,26 +1,46 @@
-NAME = a.out # rename
-SRCS =  utils.cpp User.cpp main.cpp Channel.cpp IRCServer.cpp Message.cpp
+NAME		=	irc
+CXX			=	clang++
+CXX_FLAGS	=	-std=c++98 -MMD -fsanitize=address # -Wall -Wextra -Werror
+OBJS_DIR	=	./objs/
+SERVER_DIR	=	./server/
+CLIENT_DIR	=	./client/
+BOT_DIR		=	./bot/
 
-HEADER = utils.hpp Channel.hpp IRCServer.hpp Message.hpp User.hpp
+SRCS		=	IRCServer.cpp	\
+				Channel.cpp		\
+				User.cpp		\
+				Message.cpp		\
+				utils.cpp		\
+				main.cpp
 
-OBJS = $(SRCS:.cpp=.o)
+# SRCS		=	$(addprefix $(SERVER_DIR), $(SERVER_SRCS))
 
-CLANG = clang++ -g -std=c++98 -fsanitize=address #-Wall -Werror -Wextra
+OBJS		= $(notdir $(SRCS:.cpp=.o))
+OBJS_PATH	= $(addprefix $(OBJS_DIR), $(OBJS))
+
+$(OBJS_DIR)%.o : $(SERVER_DIR)%.cpp
+	@mkdir -p $(OBJS_DIR)
+	@echo "\033[1;31m- Done :\033[0m $<"
+	@$(CXX) $(CXX_FLAGS) -c $< -o $@
+
+$(NAME): $(OBJS_PATH)
+	@$(CXX) $(CXX_FLAGS) -o $(NAME) $(OBJS_PATH)
+	@echo "🔥🔥🔥 \033[1;33;41mIRC-SERVER IS COMPLETED\033[0m 🔥🔥🔥"
 
 all: $(NAME)
 
-$(NAME): $(OBJS) $(HEADER)
-	$(CLANG) $(OBJS) -o $(NAME)
-
-$(OBJS): %.o : %.cpp
-	$(CLANG) -c $< -o $@
+bonus:
+	@$(MAKE) -C $(CLIENT_DIR)
+	@$(MAKE) -C $(BOT_DIR)
 
 clean:
-	rm -rf $(OBJS)
+	rm -Rf $(OBJS_DIR)
 
 fclean: clean
-	rm -rf $(NAME)
+	rm -f $(NAME)
+	@$(MAKE) -C $(CLIENT_DIR) fclean
+	@$(MAKE) -C $(BOT_DIR) fclean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY : all bonus clean fclean re

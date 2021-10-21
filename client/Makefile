@@ -16,7 +16,7 @@ $(OBJS_DIR)%.o : %.cpp Client.hpp
 
 $(NAME): $(OBJS_PATH)
 	@$(CXX) -o $(NAME) $(OBJS_PATH)
-	@echo "🔥🔥🔥 \033[1;31;42mCLIENT IS COMPLETED\033[0m 🔥🔥🔥"
+	@echo "🔥🔥🔥 \033[1;31;43mCLIENT IS COMPLETED\033[0m 🔥🔥🔥"
 
 all: $(NAME)
 
