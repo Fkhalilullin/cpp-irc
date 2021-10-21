@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "../includes/IRCServer.hpp"
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -83,6 +84,85 @@ void    Client::run()
         {
             close(_sockfd);
             return ;
+        }
+
+        User    usr;
+        usr.setNickname("bot");
+        std::string msg_str;
+        Message msg(buf, usr);
+
+
+        if (utils::toUpper(msg.getCommand()) == "INVITE") {
+            msg_str = "JOIN ";
+            if (!msg.getParamets().size() == 2) {
+                msg_str += msg.getParamets()[1];
+                _send(msg_str);
+            }
+            else
+                continue ;
+        }
+        else if (utils::toUpper(msg.getCommand()) == "PRIVMSG") {
+            msg_str = "PRIVMSG ";
+            if (!msg.getParamets().empty()) {
+                if (msg.getParamets().back().find("zapuskaem") || 
+                    msg.getParamets().back().find("gusya") ||
+                    msg.getParamets().back().find("rabotyagi") ||
+                    msg.getParamets().back().find("запускаем") ||
+                    msg.getParamets().back().find("гуся") ||
+                    msg.getParamets().back().find("работяги") ||
+                    msg.getParamets().back().find("Zapuskaem") || 
+                    msg.getParamets().back().find("Gusya") ||
+                    msg.getParamets().back().find("Rabotyagi") ||
+                    msg.getParamets().back().find("Запускаем") ||
+                    msg.getParamets().back().find("Гуся") ||
+                    msg.getParamets().back().find("Работяги")) 
+                    {
+                    for (int i = 0; i < msg.getParamets().size() - 1; ++i) 
+                        msg_str += msg.getParamets()[i] + " ";
+                    msg_str += std::string(":░░░░░░░░░░░░░░░░░░░░\n") +
+                                std::string("░░░░░ЗАПУСКАЕМ░░░░░░░\n") +
+                                std::string("░ГУСЯ░▄▀▀▀▄░РАБОТЯГИ░░\n") +
+                                std::string("▄███▀░◐░░░▌░░░░░░░░░\n") +
+                                std::string("░░░░▌░░░░░▐░░░░░░░░░\n") +
+                                std::string("░░░░▐░░░░░▐░░░░░░░░░\n") +
+                                std::string("░░░░▌░░░░░▐▄▄░░░░░░░\n") +
+                                std::string("░░░░▌░░░░▄▀▒▒▀▀▀▀▄\n") +
+                                std::string("░░░▐░░░░▐▒▒▒▒▒▒▒▒▀▀▄\n") + 
+                                std::string("░░░▐░░░░▐▄▒▒▒▒▒▒▒▒▒▒▀▄\n") + 
+                                std::string("░░░░▀▄░░░░▀▄▒▒▒▒▒▒▒▒▒▒▀▄\n") +
+                                std::string("░░░░░░▀▄▄▄▄▄█▄▄▄▄▄▄▄▄▄▄▄▀▄\n") +
+                                std::string("░░░░░░░░░░░▌▌░▌▌░░░░░\n") + 
+                                std::string("░░░░░░░░░░░▌▌░▌▌░░░░░\n") +
+                                std::string("░░░░░░░░░▄▄▌▌▄▌▌░░░░░");
+                }
+                else if (msg.getParamets().back().find("Putin") ||
+                         msg.getParamets().back().find("putin") ||
+                         msg.getParamets().back().find("Путин") ||
+                         msg.getParamets().back().find("путин")) 
+                         {
+                            for (int i = 0; i < msg.getParamets().size() - 1; ++i) 
+                                msg_str += msg.getParamets()[i] + " ";
+                            msg_str += std::string(":⣿⣿⣿⣿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n") +
+                                        std::string("⣿⣿⣿⣵⣿⣿⣿⠿⡟⣛⣧⣿⣯⣿⣝⡻⢿⣿⣿⣿⣿⣿⣿⣿\n") +
+                                        std::string("⣿⣿⣿⣿⣿⠋⠁⣴⣶⣿⣿⣿⣿⣿⣿⣿⣦⣍⢿⣿⣿⣿⣿⣿\n") +
+                                        std::string("⣿⣿⣿⣿⢷⠄⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣏⢼⣿⣿⣿⣿\n") + 
+                                        std::string("⢹⣿⣿⢻⠎⠔⣛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⣿⣿⣿⣿\n") +
+                                        std::string("⢸⣿⣿⠇⡶⠄⣿⣿⠿⠟⡛⠛⠻⣿⡿⠿⠿⣿⣗⢣⣿⣿⣿⣿\n") +
+                                        std::string("⠐⣿⣿⡿⣷⣾⣿⣿⣿⣾⣶⣶⣶⣿⣁⣔⣤⣀⣼⢲⣿⣿⣿⣿\n") +
+                                        std::string("⠄⣿⣿⣿⣿⣾⣟⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⢟⣾⣿⣿⣿⣿\n") +
+                                        std::string("⠄⣟⣿⣿⣿⡷⣿⣿⣿⣿⣿⣮⣽⠛⢻⣽⣿⡇⣾⣿⣿⣿⣿⣿\n") +
+                                        std::string("⠄⢻⣿⣿⣿⡷⠻⢻⡻⣯⣝⢿⣟⣛⣛⣛⠝⢻⣿⣿⣿⣿⣿⣿\n") +
+                                        std::string("⠄⠸⣿⣿⡟⣹⣦⠄⠋⠻⢿⣶⣶⣶⡾⠃⡂⢾⣿⣿⣿⣿⣿⣿\n") +
+                                        std::string("⠄⠄⠟⠋⠄⢻⣿⣧⣲⡀⡀⠄⠉⠱⣠⣾⡇⠄⠉⠛⢿⣿⣿⣿\n") +
+                                        std::string("⠄⠄⠄⠄⠄⠈⣿⣿⣿⣷⣿⣿⢾⣾⣿⣿⣇⠄⠄⠄⠄⠄⠉⠉\n") +
+                                        std::string("⠄⠄⠄⠄⠄⠄⠸⣿⣿⠟⠃⠄⠄⢈⣻⣿⣿⠄⠄⠄⠄⠄⠄⠄\n") +
+                                        std::string("⠄⠄⠄⠄⠄⠄⠄⢿⣿⣾⣷⡄⠄⢾⣿⣿⣿⡄⠄⠄⠄⠄⠄⠄\n") +
+                                        std::string("⠄⠄⠄⠄⠄⠄⠄⠸⣿⣿⣿⠃⠄⠈⢿⣿⣿⠄⠄⠄⠄⠄⠄⠄");
+                }
+                _send(msg_str);
+            }
+            else
+                continue ;
         }
     }
 }
