@@ -1,24 +1,23 @@
 NAME		=	irc
 CXX			=	clang++
-CXX_FLAGS	=	-std=c++98 -MMD -fsanitize=address # -Wall -Wextra -Werror
+CXX_FLAGS	=	-std=c++98 -MMD -fsanitize=address -Wunused-command-line-argument# -Wall -Wextra -Werror
 OBJS_DIR	=	./objs/
 SERVER_DIR	=	./server/srcs/
 CLIENT_DIR	=	./client/
 BOT_DIR		=	./bot/
 
 SRCS		=	IRCServer.cpp	\
+				cmds.cpp		\
 				Channel.cpp		\
 				User.cpp		\
 				Message.cpp		\
 				utils.cpp		\
 				main.cpp
 
-# SRCS		=	$(addprefix $(SERVER_DIR), $(SERVER_SRCS))
-
 OBJS		= $(notdir $(SRCS:.cpp=.o))
 OBJS_PATH	= $(addprefix $(OBJS_DIR), $(OBJS))
 
-$(OBJS_DIR)%.o : $(SERVER_DIR)%.cpp
+$(OBJS_DIR)%.o : $(SERVER_DIR)%.cpp ./server/includes/IRCServer.hpp
 	@mkdir -p $(OBJS_DIR)
 	@echo "\033[1;31m- Done :\033[0m $<"
 	@$(CXX) $(CXX_FLAGS) -c $< -o $@
