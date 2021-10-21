@@ -12,10 +12,10 @@
 #include <iostream>
 #include <sstream>
 
-#include "IRCServer.hpp"
-#include "Message.hpp"
-#include "Channel.hpp"
-#include "User.hpp"
+#include "../includes/IRCServer.hpp"
+#include "../includes/Message.hpp"
+#include "../includes/Channel.hpp"
+#include "../includes/User.hpp"
 
 #define RED "\033[31m"
 #define GRE "\033[32m"

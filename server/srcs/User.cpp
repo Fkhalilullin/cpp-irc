@@ -1,4 +1,4 @@
-#include "User.hpp"
+#include "../includes/User.hpp"
 
 User::User() {
 	_password = false;

@@ -1,4 +1,4 @@
-#include "IRCServer.hpp"
+#include "../includes/IRCServer.hpp"
 #include <string>
 
 IRCServer::IRCServer(unsigned int port, std::string pass) :

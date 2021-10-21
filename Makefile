@@ -2,7 +2,7 @@ NAME		=	irc
 CXX			=	clang++
 CXX_FLAGS	=	-std=c++98 -MMD -fsanitize=address # -Wall -Wextra -Werror
 OBJS_DIR	=	./objs/
-SERVER_DIR	=	./server/
+SERVER_DIR	=	./server/srcs/
 CLIENT_DIR	=	./client/
 BOT_DIR		=	./bot/
 
