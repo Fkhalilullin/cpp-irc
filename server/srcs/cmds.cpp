@@ -83,7 +83,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 	}
 }
 
-void    IRCServer::_CAP( const Message &msg, const User &user ) const
+void    IRCServer::_CAP( const Message &msg, const User &user )
 {
     std::string	buf;
 
@@ -115,7 +115,7 @@ void    IRCServer::_PASS( const Message &msg, User &user )
         return ;
     }
     if (msg.getParamets()[0] == _password)
-        user.switchPassword();
+        user.unablePassword();
     else
     {
         if (user.getNickname().empty())
@@ -215,6 +215,34 @@ void    IRCServer::_NICK( const Message &msg, User **user )
     _sendToJoinedChannels(newNick, buf);
     (*user) = &(_users.find(newNick)->second);
     _send((*user)->getSocket(), buf);
+    (*user)->unableNick();
+    if ((*user)->isNick() && (*user)->isUser() && !(*user)->isLogged())
+    {
+        (*user)->unableLogged();
+        buf = "001 "
+            + (*user)->getNickname()
+            + " :Welcome to the Internet Relay Network, "
+            + (*user)->getNickname()
+            + "\r\n";
+        buf += "002 "
+            + (*user)->getNickname()
+            + " :Your host is <servername>, running version <version>"
+            + "\r\n";
+        buf += "003 "
+            + (*user)->getNickname()
+            + " :This server was created <datetime>"
+            + "\r\n";
+        buf += "004 "
+            + (*user)->getNickname()
+            + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz"
+            + "\r\n";
+        buf += "005 "
+            + (*user)->getNickname()
+            + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 \
+                NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 \
+                CHANMODES=beI,k,l,acimnpqrstz :are supported by this server";
+        _send((*user)->getSocket(), buf);
+    }
 }
 
 void    IRCServer::_USER( const Message &msg, User &user )
@@ -229,38 +257,43 @@ void    IRCServer::_USER( const Message &msg, User &user )
         _send(user.getSocket(), buf);
         return ;
     }
-    if (user.isLogged())
+    if (user.isUser())
     {
         buf = "462 :Already registered";
         _send(user.getSocket(), buf);
         return ;
     }
-    user.switchLogged();
-    buf = "001 "
-        + user.getNickname()
-        + " :Welcome to the Internet Relay Network, "
-        + user.getNickname()
-        + "\r\n";
-    buf += "002 "
-        + user.getNickname()
-        + " :Your host is <servername>, running version <version>"
-        + "\r\n";
-    buf += "003 "
-        + user.getNickname()
-        + " :This server was created <datetime>"
-        + "\r\n";
-    buf += "004 "
-        + user.getNickname()
-        + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz"
-        + "\r\n";
-    buf += "005 "
-        + user.getNickname()
-        + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 CHANMODES=beI,k,l,acimnpqrstz :are supported by this server"
-        + "\r\n";
-    _send(user.getSocket(), buf);
+    user.unableUser();
+    if (user.isNick() && user.isUser() && !user.isLogged())
+    {
+        user.unableLogged();
+        buf = "001 "
+            + user.getNickname()
+            + " :Welcome to the Internet Relay Network, "
+            + user.getNickname()
+            + "\r\n";
+        buf += "002 "
+            + user.getNickname()
+            + " :Your host is <servername>, running version <version>"
+            + "\r\n";
+        buf += "003 "
+            + user.getNickname()
+            + " :This server was created <datetime>"
+            + "\r\n";
+        buf += "004 "
+            + user.getNickname()
+            + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz"
+            + "\r\n";
+        buf += "005 "
+            + user.getNickname()
+            + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 \
+                NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 \
+                CHANMODES=beI,k,l,acimnpqrstz :are supported by this server";
+        _send(user.getSocket(), buf);
+    }
 }
 
-void    IRCServer::_PING( const Message &msg, const User &user ) const
+void    IRCServer::_PING( const Message &msg, const User &user )
 {
     std::string	buf;
 
@@ -632,7 +665,7 @@ void    IRCServer::_OPER( const Message &msg, const User &user )
     _send(user.getSocket(), buf);
 }
 
-void IRCServer::_LIST( const Message &msg, const User &user ) const
+void IRCServer::_LIST( const Message &msg, const User &user )
 {
     std::map<std::string, Channel>::const_iterator  it;
     std::string                                     buf;

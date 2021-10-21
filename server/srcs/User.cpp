@@ -1,10 +1,11 @@
 #include "../includes/User.hpp"
 
-User::User() {
-	_password = false;
-	_logged = false;
-	_socket = -1;
-}
+User::User() : _password(false),
+               _logged  (false),
+               _socket  (-1   ),
+               _nick    (false),
+               _user    (false)
+{}
 
 User::User( const User &rhs ) : _nickname  (rhs._nickname  ),
                                 _username  (rhs._username  ),
@@ -12,14 +13,12 @@ User::User( const User &rhs ) : _nickname  (rhs._nickname  ),
                                 _serverName(rhs._serverName),
                                 _password  (rhs._password  ),
                                 _logged    (rhs._logged    ),
-                                _socket    (rhs._socket    )
-{
+                                _socket    (rhs._socket    ),
+                                _nick      (rhs._nick      ),
+                                _user      (rhs._user      )
+{}
 
-}
-
-User::~User() {
-
-}
+User::~User() {}
 
 void User::setNickname(const std::string &nick)  {
 	_nickname = nick;
@@ -37,12 +36,33 @@ void User::setServerName(const std::string &sname) {
 	_serverName = sname;
 }
 
-void User::switchPassword() {
-	_password = !_password;
+void User::unablePassword() {
+	_password = true;
 }
 
-void User::switchLogged() {
-	_logged = !_logged;
+void User::unableLogged()
+{
+	_logged = true;
+}
+
+void User::unableNick()
+{
+	_nick = true;
+}
+
+void User::unableUser()
+{
+	_user = true;
+}
+
+bool User::isNick() const
+{
+    return (_nick);
+}
+
+bool User::isUser() const
+{
+    return (_user);
 }
 
 void User::setSocket(int socket) {
@@ -81,4 +101,14 @@ void	User::appendBuffer(const std::string &data)
 const std::string &User::getBuffer() const
 {
 	return (_buffer);
+}
+
+void    User::setSendBuffer(const std::string &data)
+{
+    _sendBuffer = data;
+}
+
+const std::string   &User::getSendBuffer() const
+{
+    return (_sendBuffer);
 }

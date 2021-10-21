@@ -72,32 +72,39 @@ void IRCServer::start()
                 continue ;
             std::string buf;
             uit = _getUser(i);
+            User* user = &(uit->second);
+
+            if (!user->getSendBuffer().empty())
+                _send(i, user->getSendBuffer());
 
             // receiving data
             try
             {
                 if ( _recv(i, buf) )
                 {
-                    uit->second.appendBuffer(buf);
-                    buf = uit->second.getBuffer();
-                    uit->second.clearBuffer();
+
                 }
                 else
                 {
-                    uit->second.appendBuffer(buf);
+
                     continue ;
                 }
             }
             catch (const std::exception& e)
             {
-                User* user = &(uit->second);
                 _QUIT(Message(std::string("QUIT :Remote host closed the connection"), *user), &user);
             }
             // command execution
             _execute(i, buf);
 
-            std::cout << "Number of users : "
+            std::cout << "Number of users :\t "
                         << _users.size() << std::endl;
+            int logged = 0;
+            for (uit = _users.begin(); uit != _users.end(); ++uit)
+                if (uit->second.isLogged())
+                    logged++;
+            std::cout << "Number of logged users : "
+                        << logged << std::endl;
 		}
         if (FD_ISSET(_listener, &select_fds))
             _accept();
@@ -108,25 +115,29 @@ void IRCServer::start()
     throw std::invalid_argument(strerror(errno));
 }
 
-bool    IRCServer::_recv( int sockfd, std::string &buf ) const
+bool    IRCServer::_recv( int sockfd, std::string &buf )
 {
     char    c_buf[512];
 	int     bytesLeft;
 	int     bytes = 1;
     int     res;
 
+    if (_getUser(sockfd) == _users.end())
+        return (false);
+    User &user = _getUser(sockfd)->second;
     buf.clear();
     while (buf.find(_delimeter) == std::string::npos
-                            && buf.length() < sizeof(c_buf))
+                            && user.getBuffer().size() + buf.size() < sizeof(c_buf))
     {
         memset(c_buf, 0, sizeof(c_buf));
-        bytes = recv(sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
-        std::cout << "bytes -> " << bytes << "\n";
+        bytes = recv(sockfd, c_buf, sizeof(c_buf) - 1 - (user.getBuffer().size() + buf.size()), MSG_PEEK);
         if (bytes < 0)
         {
             if (errno == EAGAIN)
+            {
+                user.appendBuffer(buf);
                 return (false);
-
+            }
             std::cerr << RED << strerror(errno) << END;
             throw std::exception();
         }
@@ -144,6 +155,11 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
             bytes = recv(sockfd, c_buf, bytesLeft, 0);
             if (bytes < 0)
             {
+                if (errno == EAGAIN)
+                {
+                    user.appendBuffer(buf);
+                    return (false);
+                }
                 std::cerr << RED << strerror(errno) << END;
                 throw std::exception();
             }
@@ -157,25 +173,35 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
         res = false;
     else
         res = true;
+    user.appendBuffer(buf);
+    buf = user.getBuffer();
+    user.clearBuffer();
+    buf.erase(buf.end() - _delimeter.length(), buf.end());
     std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
     std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
     std::cout << GRE << "socket  : " << END << sockfd << std::endl;
     // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
     std::cout << GRE << "msg     : " << END << buf << std::endl;
     std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
-    buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (res);
 }
 
-bool	IRCServer::_send( int sockfd, const std::string &buf ) const
+bool	IRCServer::_send( int sockfd, const std::string &buf )
 {
     std::string buf_delim(buf);
     int         total = 0;
     int         bytesLeft;
-    int     	bytes;
+    int         bytes;
 
-    if (buf.empty())
+    if (_getUser(sockfd) == _users.end())
         return (false);
+    User &user = _getUser(sockfd)->second;
+    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
+    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    std::cout << YEL << "msg     : " << END << buf << std::endl;
+    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
     bytesLeft = buf_delim.length();
@@ -184,18 +210,17 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
         bytes = send(sockfd, buf_delim.c_str() + total, bytesLeft, 0);
         if (bytes < 0)
         {
+            if (errno == EAGAIN)
+            {
+                user.setSendBuffer(buf_delim.c_str() + total);
+                return (false);
+            }
             std::cerr << RED << strerror(errno) << END;
             break ;
         }
         total += bytes;
         bytesLeft -= bytes;
     }
-    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
-    std::cout << YEL << "------------SENDED------------" << END << std::endl;
-    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
-    std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
-    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
 }
 
@@ -250,7 +275,7 @@ void    IRCServer::_addUser(const User &user)
 }
 
 
-void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::string &buf ) const
+void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::string &buf )
 {
     std::vector<std::string>                        alreadySent;
     std::map<std::string, Channel>::const_iterator  chit;
@@ -318,7 +343,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     User    *user = &it->second;
 
     if (_password.empty() && !user->isPassworded())
-	    user->switchPassword();
+        user->unablePassword();
     if (user->isPassworded() && user->isLogged())
     {
         _QUIT(msg, &user);
