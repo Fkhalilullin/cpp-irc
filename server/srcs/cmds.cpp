@@ -500,17 +500,23 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 			catch ( ... ) {}
 
-			this->_send(usr.getSocket(), to_send);
+			// this->_send(usr.getSocket(), to_send);
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 
 			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :" + new_ch.getName(); 											// IMYA SERVERA
 			to_send = ":" + usr.getNickname() + " JOIN :" + new_ch.getName();
 			this->_send(usr.getSocket(), to_send);
-            Message namesMsg(msg);
-            namesMsg.setCommand("NAMES");
-			this->_NAMES(namesMsg, usr);
+            
 		}
 	}
+            std::string namesMsg;
+            namesMsg = "NAMES ";
+            for (int i = 0; i < params.size(); i++) {
+                namesMsg += params[i] + ",";
+            }
+            namesMsg.erase(namesMsg.size() - 1);
+            // _send(usr.getSocket(),m);
+			this->_NAMES(Message(namesMsg, usr), usr);
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
@@ -772,7 +778,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
         return ;
 	// if (_channels.empty())
 	// 	return ;
-
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
         if (!buf_string.empty() && buf_string[i][0] == '#') {
@@ -781,7 +786,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
         else
             buf_string.pop_back();
     }
-
 
 	ch_it = _channels.begin();
 	if (! buf_string.empty()) {
