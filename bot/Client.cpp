@@ -60,8 +60,9 @@ void    Client::run()
     std::string buf;
 
     buf = "PASS 1234"                  + std::string("\r\n")
-        + "NICK " + std::string(_nick) + std::string("\r\n")
-        + "USER myusernaaame * * *"               + std::string("\r\n");
+
+        + "USER myusernaaame * * *"               + std::string("\r\n")
+        + "NICK " + std::string(_nick) + std::string("\r\n");
     _send(buf);
     while (21)
     {

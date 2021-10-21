@@ -96,8 +96,14 @@ void IRCServer::start()
             // command execution
             _execute(i, buf);
 
-            std::cout << "Number of users : "
+            std::cout << "Number of users :\t "
                         << _users.size() << std::endl;
+            int logged = 0;
+            for (uit = _users.begin(); uit != _users.end(); ++uit)
+                if (uit->second.isLogged())
+                    logged++;
+            std::cout << "Number of logged users : "
+                        << logged << std::endl;
 		}
         if (FD_ISSET(_listener, &select_fds))
             _accept();
@@ -156,25 +162,32 @@ bool    IRCServer::_recv( int sockfd, std::string &buf ) const
         res = false;
     else
         res = true;
+    buf.erase(buf.end() - _delimeter.length(), buf.end());
     std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
     std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
     std::cout << GRE << "socket  : " << END << sockfd << std::endl;
     // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
     std::cout << GRE << "msg     : " << END << buf << std::endl;
     std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
-    buf.erase(buf.end() - _delimeter.length(), buf.end());
     return (res);
 }
 
 bool	IRCServer::_send( int sockfd, const std::string &buf ) const
 {
+    // std::multimap<std::string, User>::iterator  it;
     std::string buf_delim(buf);
     int         total = 0;
     int         bytesLeft;
-    int     	bytes;
+    int         bytes;
 
     if (buf.empty())
         return (false);
+    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
+    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
+    std::cout << YEL << "msg     : " << END << buf << std::endl;
+    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
     bytesLeft = buf_delim.length();
@@ -189,12 +202,6 @@ bool	IRCServer::_send( int sockfd, const std::string &buf ) const
         total += bytes;
         bytesLeft -= bytes;
     }
-    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
-    std::cout << YEL << "------------SENDED------------" << END << std::endl;
-    std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
-    std::cout << YEL << "msg     : " << END << buf_delim << std::endl;
-    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     return (bytes == -1 ? false : true);
 }
 
@@ -317,7 +324,7 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     User    *user = &it->second;
 
     if (_password.empty() && !user->isPassworded())
-	    user->switchPassword();
+        user->unablePassword();
     if (user->isPassworded() && user->isLogged())
     {
         _QUIT(msg, &user);

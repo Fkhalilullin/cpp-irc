@@ -18,6 +18,8 @@ class User {
 		std::string _realName;
 		std::string _serverName; // the same
 		bool		_password;
+		bool		_nick;
+		bool		_user;
 		bool		_logged; // orig nick
 		int			_socket;
 		std::string _buffer;
@@ -27,12 +29,16 @@ class User {
 		void	setUsername(const std::string &uname);
 		void	setRealName(const std::string &rname);
 		void	setServerName(const std::string &sname);
-		void	switchPassword();
-		void	switchLogged();
+		void	unablePassword();
+		void	unableLogged();
+		void	unableNick();
+		void	unableUser();
 		void	setSocket   (int socket);
 		int		getSocket   () const;
 		bool	isLogged    () const;
 		bool	isPassworded() const;
+		bool	isNick      () const;
+		bool	isUser      () const;
 		const std::string getNickname() const;
 
 		void	clearBuffer();
