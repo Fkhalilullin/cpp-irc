@@ -1,16 +1,4 @@
-#include <stdio.h>
-#include <string.h>   //strlen
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>   //close
-#include <arpa/inet.h>	//close
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO
-#include <netdb.h> // proto
 #include <iostream>
-#include <sstream>
 
 #include "../includes/IRCServer.hpp"
 #include "../includes/Message.hpp"
@@ -18,9 +6,6 @@
 #include "../includes/User.hpp"
 
 #define RED "\033[31m"
-#define GRE "\033[32m"
-#define YEL "\033[33m"
-#define BLU "\033[34m"
 #define END "\033[37m"
 
 int main(int argc, char *argv[]) {

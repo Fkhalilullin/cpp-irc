@@ -62,12 +62,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
                                     + ch_it->second.getName()
                                     + " :"
                                     + msg.getParamets().back());
-            std::map<std::string, User*>::const_iterator us_ch_it;
 
-            // us_ch_it = ch_it->second.getUsers().begin();
-            // for (;us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it) {
-		    //     _send(us_ch_it->second->getSocket(), message);
-            // }
             _sendToChannel(ch_it->second.getName(), message, msg.getPrefix());
         }
         else{
@@ -374,7 +369,6 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 	if (msg.getParamets()[0][0] != '#' && msg.getParamets()[0][0] != '&') {
 		// first param should be group
-
 		to_send = "400 " + usr.getNickname() + " JOIN " + ":Could not process invalid parameters";
 		std::cout << usr.getNickname() + " JOIN " + ":Could not process invalid parameters" << std::endl;
 		_send(usr.getSocket(), to_send);
@@ -402,17 +396,14 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 		}
 
-		if (tmp_param[0] == '#' || tmp_param[0] == '&') {
-			// tmp_param.erase(0, 1);
+		if (tmp_param[0] == '#' || tmp_param[0] == '&')
 			params.push_back(tmp_param);
-		}
-		else {
+		else
 			passwords.push_back(tmp_param);
-		}
 	}
 
 	if (passwords.size() > params.size()) {
-		std::cout << "more passes were provided than groups" << std::endl; // maybe set invalid params
+		std::cout << "more passes were provided than groups" << std::endl;
 		return;
 	}
 
@@ -443,7 +434,6 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 					return;
 				}
 			}
-			std::cout << "whats inside" << std::endl; // to del
 
             std::map<std::string, User*>::const_iterator user_search_it;
 			user_search_it = ch_it->second.getUsers().find(usr.getNickname());
@@ -467,22 +457,11 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 				return;
 			}
 
-			// _send(usr.getSocket(), "JOIN");
 			ch_it->second.addUser(usr);
 
-	 		// if joined user -> send msg about new user to all ?? need ??
+			to_send = ":" + usr.getNickname() + " JOIN :" + ch_it->second.getName();
 
-
-
-			to_send = ":" + usr.getNickname() + " JOIN :" + ch_it->second.getName(); // updated 17.10
-
-			// std::string to_send = "welcome to " + ch_it->second.getName() + " group\n";
-			// to_send += "the topic of the channel is " + ch_it->second.getTopic();
-			// this->_send(usr.getSocket(), to_send);
-			// this->_send(usr.getSocket(), to_send); // old version of greeting new user
-			// _NAMES(msg, usr);
-
-			this->_sendToChannel(ch_it->second.getName(), to_send); // + iskluchenie
+			this->_sendToChannel(ch_it->second.getName(), to_send);
 			Message namesMsg(msg);
             namesMsg.setCommand("NAMES");
 			this->_NAMES(namesMsg, usr);
@@ -518,32 +497,23 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 			catch ( ... ) {}
 
-			// this->_send(usr.getSocket(), to_send);
 			this->_channels.insert(std::make_pair(new_ch.getName(), new_ch));
 
-			// to_send = ":" + this->_hostname + " " + usr.getNickname() + " JOIN :" + new_ch.getName(); 											// IMYA SERVERA
 			to_send = ":" + usr.getNickname() + " JOIN :" + new_ch.getName();
 			this->_send(usr.getSocket(), to_send);
             
 		}
 	}
-            std::string namesMsg;
-            namesMsg = "NAMES ";
-            for (int i = 0; i < params.size(); i++) {
-                namesMsg += params[i] + ",";
-            }
-            namesMsg.erase(namesMsg.size() - 1);
-            // _send(usr.getSocket(),m);
-			this->_NAMES(Message(namesMsg, usr), usr);
+	std::string namesMsg;
+	namesMsg = "NAMES ";
+	for (int i = 0; i < params.size(); i++)
+		namesMsg += params[i] + ",";
+
+	namesMsg.erase(namesMsg.size() - 1);
+	this->_NAMES(Message(namesMsg, usr), usr);
 }
 
 void IRCServer::_PART(const Message &msg, const User &usr) {
-
-	// std::cout << GRE << "hello its me" << END <<  std::endl; // DEL
-	// std::map<std::string, Channel>::iterator chiter; // del
-	// chiter = this->_channels.begin(); // DEL
-	// for (; chiter != this->_channels.end(); chiter++) // DEL
-	// 	std::cout << chiter->first << std::endl; // DEL
 
 	if (utils::toUpper(msg.getCommand()) != "PART")
         return;
@@ -566,11 +536,9 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 			to_send = "400 " + usr.getNickname() + " PART " + ":Could not process invalid parameters";
 			std::cout << usr.getNickname() + " PART " + ":Could not process invalid parameters" << std::endl;
 			_send(usr.getSocket(), to_send);
-			// return; // ignorirovanie
 		}
 		else {
 			tmp_param = msg.getParamets()[i];
-			// tmp_param.erase(0, 1);
 			params.push_back(tmp_param);
 		}
 	}
@@ -586,26 +554,15 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 
 			// user in group. should be deleted
 			if (user_search_it != ch_it->second.getUsers().end()) {
-				// std::cout << "USER SHOUL BE DELETED " << std::endl;
+			
+				to_send = ":" + usr.getNickname() + " PART :" + ch_it->first;
 
-
-
-				// to_send = usr.getNickname() + " :PART";
-				// std::cout << usr.getNickname() + " leaves channel " + ch_it->first << std::endl;
-				// _send(usr.getSocket(), to_send);
-
-				to_send = ":" + usr.getNickname() + " PART :" + ch_it->first;																	// vivod klientu
-				// this->_send(usr.getSocket(), to_send); // to user
-
-				this->_sendToChannel(ch_it->first, to_send); // 																			+ iskluchenie usera
+				this->_sendToChannel(ch_it->first, to_send);
 				ch_it->second.removeUser(usr.getNickname());
 
 				// if group is empty - del it
-				if (ch_it->second.getUsers().empty()) {
-					// need i send to all that group is deleted
-					// std::cout << "NEED TO DEL GROUP" << std::endl; // del
+				if (ch_it->second.getUsers().empty())
 					this->_channels.erase(ch_it->first);
-				}
 			}
 			else { // no this user in group
 				to_send = "442 " + usr.getNickname() + " " + params[i] + " "  + ":You're not on that channel";
@@ -618,7 +575,6 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 			to_send = "403 " + usr.getNickname() + " " + params[i] + " "  + ":No such channel";
 			std::cout << usr.getNickname() + " " + params[i] + " "  + ":No such channel" << std::endl;
 			_send(usr.getSocket(), to_send);
-			// return; // ignorirovanie
 		}
 	}
 }
@@ -724,10 +680,8 @@ void    IRCServer::_TOPIC(const Message &msg, const User &user) {
     }
 
     buf_string = msg.getParamets()[0];
-    if (buf_string[0] == '#') {
-        // buf_string.erase(0,1);
-    }
-    else {
+    if (buf_string[0] != '#' && buf_string[0] != '&') {
+
         buf = ":" + this->_hostname
                   + " 403 "
                   + user.getNickname()
@@ -798,10 +752,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 	// 	return ;
     for (int i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
-        if (!buf_string.empty() && buf_string[i][0] == '#') {
-            // buf_string[i].erase(0, 1);
-        }
-        else
+        if (!(!buf_string.empty() && buf_string[i][0] == '#'))
             buf_string.pop_back();
     }
 
@@ -848,8 +799,6 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 
 void IRCServer::_INVITE(const Message &msg, const User &user) {
 
-	// Команда: INVITE
-	// Параметры: <nickname> <channel>
     std::map<std::string, Channel>::iterator ch_it;
     std::map<std::string, User*>::const_iterator  us_ch_it;
     std::multimap<std::string, User>::iterator     us_it;
@@ -944,16 +893,12 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     std::map<std::string, Channel>::iterator        cit;
     std::map<std::string, User*>::  const_iterator  uit;
 
-
-    // std::cout << "BEFORE REMOVE SMTH" << std::endl;
-
     if (utils::toUpper(msg.getCommand()) != "QUIT")
         return ;
     if (msg.getParamets().empty())
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + (*user)->getNickname();
     else
         buf = ":" + (*user)->getNickname() + " QUIT :Quit: " + msg.getParamets()[0];
-    // std::cout << "MIDDLE ERRRR" << std::endl;
 
     for (cit = _channels.begin(); cit != _channels.end(); ++cit)
     {
@@ -969,9 +914,6 @@ void IRCServer::_QUIT( const Message &msg, User **user )
     FD_CLR((*user)->getSocket(), &this->_client_fds);
 
     _removeUser((*user)->getNickname());
-
-
-
 
     *user = NULL;
 }
@@ -1019,9 +961,7 @@ void IRCServer::_KILL( const Message &msg, User **user )
 
 void IRCServer::_KICK( const Message &msg, const User &user )
 {
-    std::string                                     buf;
-    // std::map<std::string, Channel>::const_iterator  cit;
-    // std::map<std::string, User*>::  const_iterator  uit;
+    std::string	buf;
 
     if (utils::toUpper(msg.getCommand()) != "KICK")
         return ;
