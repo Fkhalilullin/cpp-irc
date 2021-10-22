@@ -426,9 +426,6 @@ void IRCServer::_JOIN(const Message &msg, User &usr)
             to_send = ":" + usr.getNickname() + " JOIN :" + ch_it->second.getName();
 
             this->_sendToChannel(ch_it->second.getName(), to_send);
-            // Message namesMsg(msg);
-            // namesMsg.setCommand("NAMES");
-            // this->_NAMES(namesMsg, usr);
         }
         else
         {
@@ -706,11 +703,11 @@ void IRCServer::_NAMES(const Message &msg, const User &user)
     {
         for (size_t i = 0; i < buf_string.size(); ++i)
         {
+            std::map<std::string, User *>::const_iterator ch_us_it;
+            std::vector<User>::const_iterator ch_chops_it;
             ch_it = this->_channels.find(buf_string[i]);
             if (ch_it != _channels.end())
             {
-                std::map<std::string, User *>::const_iterator ch_us_it;
-                std::vector<User>::const_iterator ch_chops_it;
                 ch_us_it = ch_it->second.getUsers().begin();
                 message = ":" + this->_hostname + " 353 " + user.getNickname() + " = " + ch_it->second.getName() + " :";
                 for (; ch_us_it != ch_it->second.getUsers().end(); ++ch_us_it)
@@ -730,6 +727,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user)
                 message = ":" + this->_hostname + " 366 " + user.getNickname() + " " + buf_string[i] + " :End of /NAMES list";
                 _send(user.getSocket(), message);
             }
+            buf.clear();
         }
     }
 }
