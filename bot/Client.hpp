@@ -32,13 +32,15 @@ private:
     char            s[INET6_ADDRSTRLEN];
     std::string     _delimeter;
     std::string     _buffer;
+    std::string     _recvBuffer;
+    std::string     _sendBuffer;
 
 public:
     Client( const char* hostname, const char* port);
     void    run  ();
 private:
-    bool    _recv(       std::string &buf ) const;
-    bool    _send( const std::string &buf ) const;
+    bool    _recv(       std::string &buf );
+    bool    _send( const std::string &buf );
     void    _printMsg ( const std::string &cmd_str );
 };
 

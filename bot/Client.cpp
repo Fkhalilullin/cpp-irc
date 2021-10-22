@@ -73,17 +73,7 @@ void Client::run()
     {
         try
         {
-            if (_recv(buf))
-            {
-                _buffer += (buf);
-                buf = _buffer;
-                _buffer.clear();
-            }
-            else
-            {
-                _buffer += (buf);
-                continue;
-            }
+            _recv(buf);
         }
         catch (const std::exception &e)
         {
@@ -156,7 +146,7 @@ void Client::run()
     }
 }
 
-bool Client::_recv(std::string &buf) const
+bool Client::_recv(std::string &buf)
 {
     char c_buf[512];
     int bytesLeft;
@@ -164,25 +154,25 @@ bool Client::_recv(std::string &buf) const
     int res;
 
     buf.clear();
-    while (buf.find(_delimeter) == std::string::npos && buf.length() < sizeof(c_buf))
+    while (buf.find(_delimeter) == std::string::npos && _recvBuffer.size() + buf.size() < sizeof(c_buf))
     {
         memset(c_buf, 0, sizeof(c_buf));
-        bytes = recv(_sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
+        bytes = recv(_sockfd, c_buf, sizeof(c_buf) - 1 - (_recvBuffer.size() + buf.size()), MSG_PEEK);
         if (bytes < 0)
         {
             if (errno == EAGAIN)
+            {
+                _recvBuffer += buf;
                 return (false);
+            }
             std::cerr << RED << strerror(errno) << END;
             throw std::exception();
         }
         if (bytes == 0)
-        {
-            std::cerr << BLU << strerror(errno) << END;
             throw std::exception();
-        }
 
         bytesLeft = std::string(c_buf).find(_delimeter);
-        if (bytesLeft == std::string::npos)
+        if (bytesLeft == -1)
             bytesLeft = bytes;
         else
             bytesLeft += _delimeter.length();
@@ -193,37 +183,45 @@ bool Client::_recv(std::string &buf) const
             if (bytes < 0)
             {
                 if (errno == EAGAIN)
+                {
+                    _recvBuffer += buf;
                     return (false);
+                }
                 std::cerr << RED << strerror(errno) << END;
                 throw std::exception();
             }
             if (bytes == 0)
-            {
-                std::cerr << BLU << strerror(errno) << END;
                 throw std::exception();
-            }
             bytesLeft -= bytes;
             buf += c_buf;
         }
     }
-    if (buf.find(_delimeter) == -1)
+    if (buf.find(_delimeter) == std::string::npos)
         res = false;
     else
         res = true;
+    _recvBuffer += buf;
+    buf = _recvBuffer;
+    _recvBuffer.clear();
     buf.erase(buf.end() - _delimeter.length(), buf.end());
-    std::cout << GRE << "💌 \"" << buf << "\"" << END << std::endl;
-    if (buf.find("PING") != -1)
-        _send(std::string(":") + _nick + std::string(" PONG ") + _nick);
+    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
+    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
+    std::cout << GRE << "msg     : " << END << buf << std::endl;
+    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     return (res);
 }
 
-bool Client::_send(const std::string &buf) const
+bool Client::_send(const std::string &buf)
 {
     std::string buf_delim(buf);
     int total = 0;
     int bytesLeft;
     int bytes;
 
+    std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
+    std::cout << YEL << "------------SENDED------------" << END << std::endl;
+    std::cout << YEL << "msg     : " << END << buf << std::endl;
+    std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
     bytesLeft = buf_delim.length();
@@ -232,6 +230,11 @@ bool Client::_send(const std::string &buf) const
         bytes = send(_sockfd, buf_delim.c_str() + total, bytesLeft, 0);
         if (bytes < 0)
         {
+            if (errno == EAGAIN)
+            {
+                _sendBuffer = buf_delim.c_str() + total;
+                return (false);
+            }
             std::cerr << RED << strerror(errno) << END;
             break;
         }
