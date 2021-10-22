@@ -8,8 +8,10 @@
 #define RED "\033[31m"
 #define END "\033[37m"
 
-int main(int argc, char *argv[]) {
-	if (argc != 3) {
+int main(int argc, char *argv[])
+{
+	if (argc != 3)
+	{
 		std::cout << RED << "valid params need" << END << std::endl;
 		return 1;
 	}
@@ -22,10 +24,9 @@ int main(int argc, char *argv[]) {
 		IRCServer serv(port, pass);
 		serv.start();
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << RED << e.what() << END << std::endl;
 	}
 	return 0;
 }
-

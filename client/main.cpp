@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
         Client c(argv[1], argv[2], argv[3]);
         c.run();
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cerr << e.what() << std::endl;
     }

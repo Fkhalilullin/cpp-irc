@@ -3,15 +3,15 @@
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+        return &(((struct sockaddr_in *)sa)->sin_addr);
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-Client::Client( const char* hostname, const char* port, const char* nick )
-    : _hostname (hostname),
-      _port     (port    ),
-      _nick     (nick    ),
-      _delimeter("\r\n"  )
+Client::Client(const char *hostname, const char *port, const char *nick)
+    : _hostname(hostname),
+      _port(port),
+      _nick(nick),
+      _delimeter("\r\n")
 {
     int rv;
 
@@ -55,17 +55,15 @@ Client::Client( const char* hostname, const char* port, const char* nick )
     freeaddrinfo(servinfo);
 }
 
-void    Client::run()
+void Client::run()
 {
     std::string buf;
-    
-    buf = "PASS 1234"                  + std::string("\r\n")
-        + "NICK " + std::string(_nick) + std::string("\r\n")
-        + "USER myusernaaame * * *"               + std::string("\r\n");
+
+    buf = "PASS 1234" + std::string("\r\n") + "NICK " + std::string(_nick) + std::string("\r\n") + "USER myusernaaame * * *" + std::string("\r\n");
     _send(buf);
     int pid = fork();
     if (pid < 0)
-        return ;
+        return;
     if (pid > 0)
     {
         while (21)
@@ -74,10 +72,10 @@ void    Client::run()
             {
                 _recv(buf);
             }
-            catch (const std::exception& e)
+            catch (const std::exception &e)
             {
                 close(_sockfd);
-                return ;
+                return;
             }
         }
     }
@@ -93,15 +91,14 @@ void    Client::run()
     }
 }
 
-bool    Client::_recv( std::string &buf ) const
+bool Client::_recv(std::string &buf) const
 {
-    char    c_buf[BUF_SIZE];
-	int     bytesLeft;
-	int     bytes = 1;
+    char c_buf[BUF_SIZE];
+    int bytesLeft;
+    int bytes = 1;
 
     buf.clear();
-    while (buf.find(_delimeter) == std::string::npos
-                            && buf.length() < sizeof(c_buf))
+    while (buf.find(_delimeter) == std::string::npos && buf.length() < sizeof(c_buf))
     {
         memset(c_buf, 0, sizeof(c_buf));
         bytes = recv(_sockfd, c_buf, sizeof(c_buf), MSG_PEEK);
@@ -130,13 +127,13 @@ bool    Client::_recv( std::string &buf ) const
             if (bytes == 0)
                 throw std::exception();
             bytesLeft -= bytes;
-            buf       += c_buf;
+            buf += c_buf;
         }
     }
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     std::cout << GRE << (char)8 << (char)8 << (char)8
               << (char)8 << (char)8 << (char)8
-              << "💌 \""<< buf << "\"" << END << std::endl;
+              << "💌 \"" << buf << "\"" << END << std::endl;
     std::cerr << BLU << "➡️  " << END;
     // std::cerr << "===" << buf.find(std::string("PING")) << std::endl;
     if (buf.find("PING") != -1)
@@ -144,12 +141,12 @@ bool    Client::_recv( std::string &buf ) const
     return (bytes == -1 ? false : true);
 }
 
-bool	Client::_send( const std::string &buf ) const
+bool Client::_send(const std::string &buf) const
 {
     std::string buf_delim(buf);
-    int         total = 0;
-    int         bytesLeft;
-    int     	bytes;
+    int total = 0;
+    int bytesLeft;
+    int bytes;
 
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
         buf_delim += _delimeter;
@@ -160,7 +157,7 @@ bool	Client::_send( const std::string &buf ) const
         if (bytes < 0)
         {
             std::cerr << RED << strerror(errno) << END;
-            break ;
+            break;
         }
         total += bytes;
         bytesLeft -= bytes;

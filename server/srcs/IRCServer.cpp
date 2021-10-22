@@ -1,41 +1,40 @@
 #include "../includes/IRCServer.hpp"
 
-IRCServer::IRCServer(unsigned int port, std::string pass) :
-	_port(port),
-	_password(pass),
-    _delimeter("\r\n")
+IRCServer::IRCServer(unsigned int port, std::string pass) : _port(port),
+                                                            _password(pass),
+                                                            _delimeter("\r\n")
 {
-    char    hostname[30];
+    char hostname[30];
 
     memset(hostname, 0, sizeof(hostname));
     gethostbyname(hostname);
     _hostname = hostname;
 
     _serverAdress.sin_family = AF_INET;
-	_serverAdress.sin_addr.s_addr = INADDR_ANY;
-	_serverAdress.sin_port = htons(this->_port);
+    _serverAdress.sin_addr.s_addr = INADDR_ANY;
+    _serverAdress.sin_port = htons(this->_port);
 
-	FD_ZERO(&_client_fds);
+    FD_ZERO(&_client_fds);
     signal(SIGPIPE, SIG_IGN);
 
-	_listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
-	if (_listener < 0)
-		throw std::invalid_argument(strerror(errno));
+    _listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
+    if (_listener < 0)
+        throw std::invalid_argument(strerror(errno));
     _max_fd = _listener;
 
     int yes = 1;
     setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-	int b = bind(_listener, (struct sockaddr*)&_serverAdress, sizeof(_serverAdress));
-	if (b < 0)
-		throw std::invalid_argument(strerror(errno));
+    int b = bind(_listener, (struct sockaddr *)&_serverAdress, sizeof(_serverAdress));
+    if (b < 0)
+        throw std::invalid_argument(strerror(errno));
 
     int l = listen(_listener, 10);
-	if (l < 0)
-		throw std::invalid_argument(strerror(errno));
+    if (l < 0)
+        throw std::invalid_argument(strerror(errno));
 
-	FD_SET(_listener, &_client_fds);
-	_max_fd = _listener;
+    FD_SET(_listener, &_client_fds);
+    _max_fd = _listener;
 }
 
 IRCServer::~IRCServer() {}
@@ -45,7 +44,7 @@ void IRCServer::_accept()
     struct sockaddr_in temp;
 
     socklen_t socklen = sizeof(struct sockaddr_in);
-    int new_fd = accept(_listener, (struct sockaddr*)&temp, &socklen);
+    int new_fd = accept(_listener, (struct sockaddr *)&temp, &socklen);
     if (new_fd == -1)
         throw std::invalid_argument(strerror(errno));
     fcntl(_listener, F_SETFL, O_NONBLOCK);
@@ -58,21 +57,21 @@ void IRCServer::_accept()
 
 void IRCServer::start()
 {
-	std::multimap<std::string, User>::iterator  uit;
+    std::multimap<std::string, User>::iterator uit;
 
-	fd_set  select_fds;
-	select_fds = _client_fds;
+    fd_set select_fds;
+    select_fds = _client_fds;
 
     std::cout << GRE << "Server is started..." << END << std::endl;
-	while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
+    while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
     {
-		for (int i = 3; i < _max_fd + 1; i++)
+        for (int i = 3; i < _max_fd + 1; i++)
         {
-			if (!FD_ISSET(i, &select_fds) || i == _listener)
-                continue ;
+            if (!FD_ISSET(i, &select_fds) || i == _listener)
+                continue;
             std::string buf;
             uit = _getUser(i);
-            User* user = &(uit->second);
+            User *user = &(uit->second);
 
             if (!user->getSendBuffer().empty())
                 _send(i, user->getSendBuffer());
@@ -81,43 +80,42 @@ void IRCServer::start()
             {
                 _recv(i, buf);
             }
-            catch (const std::exception& e)
+            catch (const std::exception &e)
             {
                 _QUIT(Message(std::string("QUIT :Remote host closed the connection"), *user), &user);
             }
             _execute(i, buf);
 
             std::cout << "Number of users :\t "
-                        << _users.size() << std::endl;
+                      << _users.size() << std::endl;
             int logged = 0;
             for (uit = _users.begin(); uit != _users.end(); ++uit)
                 if (uit->second.isLogged())
                     logged++;
             std::cout << "Number of logged users : "
-                        << logged << std::endl;
-		}
+                      << logged << std::endl;
+        }
         if (FD_ISSET(_listener, &select_fds))
             _accept();
-		select_fds = _client_fds;
-	}
-    FD_ZERO(&select_fds );
+        select_fds = _client_fds;
+    }
+    FD_ZERO(&select_fds);
     FD_ZERO(&_client_fds);
     throw std::invalid_argument(strerror(errno));
 }
 
-bool    IRCServer::_recv( int sockfd, std::string &buf )
+bool IRCServer::_recv(int sockfd, std::string &buf)
 {
-    char    c_buf[512];
-	int     bytesLeft;
-	int     bytes = 1;
-    int     res;
+    char c_buf[512];
+    int bytesLeft;
+    int bytes = 1;
+    int res;
 
     if (_getUser(sockfd) == _users.end())
         return (false);
     User &user = _getUser(sockfd)->second;
     buf.clear();
-    while (buf.find(_delimeter) == std::string::npos
-                            && user.getBuffer().size() + buf.size() < sizeof(c_buf))
+    while (buf.find(_delimeter) == std::string::npos && user.getBuffer().size() + buf.size() < sizeof(c_buf))
     {
         memset(c_buf, 0, sizeof(c_buf));
         bytes = recv(sockfd, c_buf, sizeof(c_buf) - 1 - (user.getBuffer().size() + buf.size()), MSG_PEEK);
@@ -156,7 +154,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf )
             if (bytes == 0)
                 throw std::exception();
             bytesLeft -= bytes;
-            buf       += c_buf;
+            buf += c_buf;
         }
     }
     if (buf.find(_delimeter) == std::string::npos)
@@ -175,12 +173,12 @@ bool    IRCServer::_recv( int sockfd, std::string &buf )
     return (res);
 }
 
-bool	IRCServer::_send( int sockfd, const std::string &buf )
+bool IRCServer::_send(int sockfd, const std::string &buf)
 {
     std::string buf_delim(buf);
-    int         total = 0;
-    int         bytesLeft;
-    int         bytes;
+    int total = 0;
+    int bytesLeft;
+    int bytes;
 
     if (_getUser(sockfd) == _users.end())
         return (false);
@@ -204,7 +202,7 @@ bool	IRCServer::_send( int sockfd, const std::string &buf )
                 return (false);
             }
             std::cerr << RED << strerror(errno) << END;
-            break ;
+            break;
         }
         total += bytes;
         bytesLeft -= bytes;
@@ -212,9 +210,9 @@ bool	IRCServer::_send( int sockfd, const std::string &buf )
     return (bytes == -1 ? false : true);
 }
 
-void    IRCServer::_removeUser(int sockfd)
+void IRCServer::_removeUser(int sockfd)
 {
-    std::multimap<std::string, User>::iterator  it;
+    std::multimap<std::string, User>::iterator it;
 
     it = _users.begin();
     while (it != _users.end() && it->second.getSocket() != sockfd)
@@ -223,10 +221,10 @@ void    IRCServer::_removeUser(int sockfd)
         _users.erase(it);
 }
 
-void    IRCServer::_removeUser( const std::string &nick )
+void IRCServer::_removeUser(const std::string &nick)
 {
     std::multimap<std::string, Channel>::iterator chit;
-    std::multimap<std::string, User>   ::iterator uit;
+    std::multimap<std::string, User>::iterator uit;
 
     // removing from _channels
     for (chit = _channels.begin(); chit != _channels.end(); ++chit)
@@ -237,17 +235,19 @@ void    IRCServer::_removeUser( const std::string &nick )
         _users.erase(uit);
 
     // removing channel
-    for (chit = _channels.begin(); chit != _channels.end(); ++chit) {
-        if (chit->second.getUsers().empty()) {
+    for (chit = _channels.begin(); chit != _channels.end(); ++chit)
+    {
+        if (chit->second.getUsers().empty())
+        {
             this->_channels.erase(chit);
             chit = _channels.begin();
             if (chit == this->_channels.end())
-                return ;
+                return;
         }
     }
 }
 
-void    IRCServer::_addUser(int sockfd)
+void IRCServer::_addUser(int sockfd)
 {
     User new_user;
 
@@ -256,19 +256,18 @@ void    IRCServer::_addUser(int sockfd)
     _users.insert(tmp);
 }
 
-void    IRCServer::_addUser(const User &user)
+void IRCServer::_addUser(const User &user)
 {
     std::pair<std::string, User> tmp(user.getNickname(), user);
     _users.insert(tmp);
 }
 
-
-void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::string &buf )
+void IRCServer::_sendToJoinedChannels(const std::string &nick, const std::string &buf)
 {
-    std::vector<std::string>                        alreadySent;
-    std::map<std::string, Channel>::const_iterator  chit;
-    std::map<std::string, User*>  ::const_iterator  uit;
-    std::vector<std::string>      ::const_iterator  vit;
+    std::vector<std::string> alreadySent;
+    std::map<std::string, Channel>::const_iterator chit;
+    std::map<std::string, User *>::const_iterator uit;
+    std::vector<std::string>::const_iterator vit;
 
     // passing through all channels
     for (chit = _channels.begin(); chit != _channels.end(); ++chit)
@@ -293,19 +292,19 @@ void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::st
     }
 }
 
-void    IRCServer::_sendToChannel( const std::string &channel,
-                        const std::string &buf,
-                        const std::string &nick /* = "" */ )
+void IRCServer::_sendToChannel(const std::string &channel,
+                               const std::string &buf,
+                               const std::string &nick /* = "" */)
 {
-    std::map<std::string, Channel>::const_iterator  chit;
-    std::map<std::string, User*>::const_iterator    it;
+    std::map<std::string, Channel>::const_iterator chit;
+    std::map<std::string, User *>::const_iterator it;
 
     chit = _channels.find(channel);
     if (chit == _channels.end())
     {
         std::cerr << RED << "Something went wrong : _sendToChannel : No such channel"
                   << END << std::endl;
-        return ;
+        return;
     }
     it = chit->second.getUsers().begin();
     for (; it != chit->second.getUsers().end(); ++it)
@@ -315,18 +314,18 @@ void    IRCServer::_sendToChannel( const std::string &channel,
     }
 }
 
-void    IRCServer::_execute( int sockfd, const std::string &buf )
+void IRCServer::_execute(int sockfd, const std::string &buf)
 {
-    std::multimap<std::string, User>::iterator  it;
+    std::multimap<std::string, User>::iterator it;
 
     it = _users.begin();
     while (it != _users.end() && it->second.getSocket() != sockfd)
         it++;
     if (it == _users.end())
-        return ; // no such user
+        return; // no such user
 
     Message msg(buf, it->second);
-    User    *user = &it->second;
+    User *user = &it->second;
 
     if (_password.empty() && !user->isPassworded())
         user->unablePassword();
@@ -334,13 +333,13 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     {
         _QUIT(msg, &user);
         if (user == NULL)
-            return ;
+            return;
         _KILL(msg, &user);
         if (user == NULL)
-            return ;
+            return;
     }
 
-    _CAP (msg, *user);
+    _CAP(msg, *user);
     _PASS(msg, *user);
     _PING(msg, *user);
     if (user->isPassworded())
@@ -351,24 +350,23 @@ void    IRCServer::_execute( int sockfd, const std::string &buf )
     if (user->isPassworded() && user->isLogged())
     {
         _PRIVMSG(msg, *user);
-        _JOIN   (msg, *user);
-        _PART   (msg, *user);
-        _LIST   (msg, *user);
-        _OPER   (msg, *user);
-        _KICK   (msg, *user);
-        _NAMES  (msg, *user);
-        _TOPIC  (msg, *user);
-        _INVITE (msg, *user);
+        _JOIN(msg, *user);
+        _PART(msg, *user);
+        _LIST(msg, *user);
+        _OPER(msg, *user);
+        _KICK(msg, *user);
+        _NAMES(msg, *user);
+        _TOPIC(msg, *user);
+        _INVITE(msg, *user);
     }
 }
 
-std::multimap<std::string, User>::iterator    IRCServer::_getUser( int sockfd )
+std::multimap<std::string, User>::iterator IRCServer::_getUser(int sockfd)
 {
-    std::multimap<std::string, User>::iterator  it;
+    std::multimap<std::string, User>::iterator it;
 
     it = _users.begin();
     while (it != _users.end() && it->second.getSocket() != sockfd)
         it++;
     return (it);
 }
-
