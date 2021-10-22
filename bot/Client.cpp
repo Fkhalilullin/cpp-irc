@@ -94,6 +94,7 @@ void Client::run()
         std::string msg_str;
         std::string cmd_str;
         Message msg(buf, usr);
+        std::ifstream fin;
 
         if (utils::toUpper(msg.getCommand()) == "INVITE")
         {
@@ -111,43 +112,46 @@ void Client::run()
             cmd_str = "PRIVMSG ";
             if (!msg.getParamets().empty())
             {
-                if (msg.getParamets().back().find("zapuskaem") != -1 ||
-                    msg.getParamets().back().find("gusya") != -1 ||
-                    msg.getParamets().back().find("rabotyagi") != -1 ||
-                    msg.getParamets().back().find("запускаем") != -1 ||
-                    msg.getParamets().back().find("гуся") != -1 ||
-                    msg.getParamets().back().find("работяги") != -1 ||
-                    msg.getParamets().back().find("Zapuskaem") != -1 ||
-                    msg.getParamets().back().find("Gusya") != -1 ||
-                    msg.getParamets().back().find("Rabotyagi") != -1 ||
-                    msg.getParamets().back().find("Запускаем") != -1 ||
-                    msg.getParamets().back().find("Гуся") != -1 ||
-                    msg.getParamets().back().find("Работяги") != -1)
+                if (msg.getParamets().back().find("zapuskaem") != std::string::npos ||
+                    msg.getParamets().back().find("gusya") != std::string::npos ||
+                    msg.getParamets().back().find("rabotyagi") != std::string::npos ||
+                    msg.getParamets().back().find("запускаем") != std::string::npos ||
+                    msg.getParamets().back().find("гуся") != std::string::npos ||
+                    msg.getParamets().back().find("работяги") != std::string::npos ||
+                    msg.getParamets().back().find("Zapuskaem") != std::string::npos ||
+                    msg.getParamets().back().find("Gusya") != std::string::npos ||
+                    msg.getParamets().back().find("Rabotyagi") != std::string::npos ||
+                    msg.getParamets().back().find("Запускаем") != std::string::npos ||
+                    msg.getParamets().back().find("Гуся") != std::string::npos ||
+                    msg.getParamets().back().find("Работяги") != std::string::npos)
                 {
                     for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    _printMsg(cmd_str);
+                    fin.open("gus.txt");
+                    _printMsg(cmd_str, fin);
                 }
-                else if (msg.getParamets().back().find("Putin") != -1 ||
-                         msg.getParamets().back().find("putin") != -1 ||
-                         msg.getParamets().back().find("Путин") != -1 ||
-                         msg.getParamets().back().find("путин") != -1)
+                else if (msg.getParamets().back().find("Putin") != std::string::npos ||
+                         msg.getParamets().back().find("putin") != std::string::npos ||
+                         msg.getParamets().back().find("Путин") != std::string::npos ||
+                         msg.getParamets().back().find("путин") != std::string::npos)
                 {
                     for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    _printMsg(cmd_str);
+                    fin.open("putin.txt");
+                    _printMsg(cmd_str, fin);
                 }
-                else if (msg.getParamets().back().find("Shrek") != -1 ||
-                         msg.getParamets().back().find("shrek") != -1 ||
-                         msg.getParamets().back().find("Шрек") != -1 ||
-                         msg.getParamets().back().find("шрек") != -1)
+                else if (msg.getParamets().back().find("Shrek") != std::string::npos ||
+                         msg.getParamets().back().find("shrek") != std::string::npos ||
+                         msg.getParamets().back().find("Шрек") != std::string::npos  ||
+                         msg.getParamets().back().find("шрек") != std::string::npos)
                 {
                     for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    _printMsg(cmd_str);
+                    fin.open("shrek.txt");
+                    _printMsg(cmd_str, fin);
                 }
             }
             else
@@ -241,13 +245,11 @@ bool Client::_send(const std::string &buf) const
     return (bytes == -1 ? false : true);
 }
 
-void Client::_printMsg(const std::string &cmd_str)
+void Client::_printMsg(const std::string &cmd_str, std::ifstream &fin)
 {
-    std::ifstream fin;
     std::string str;
     std::string buf;
 
-    fin.open("shrek.txt");
     if (!fin.is_open())
         return;
     while (1)

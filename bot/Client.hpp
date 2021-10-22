@@ -39,7 +39,7 @@ public:
 private:
     bool    _recv(       std::string &buf ) const;
     bool    _send( const std::string &buf ) const;
-    void    _printMsg ( const std::string &cmd_str );
+    void    _printMsg ( const std::string &cmd_str, std::ifstream &fin);
 };
 
 #endif /* CLIENT_HPP */
