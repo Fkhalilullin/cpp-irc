@@ -41,6 +41,8 @@ class User;
 class Channel;
 class Message;
 
+void    sigintCatcher(int sig);
+
 class IRCServer
 {
     private:
@@ -60,9 +62,10 @@ class IRCServer
     public:
         explicit IRCServer( unsigned int port, std::string pass );
         ~IRCServer();
-        void        start();
+        void    start();
 
     private:
+        void    _stop      ();
         void    _accept    ();
         bool    _recv      ( int sockfd,       std::string &buf );
         bool    _send      ( int sockfd, const std::string &buf );

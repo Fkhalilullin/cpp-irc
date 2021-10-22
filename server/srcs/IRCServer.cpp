@@ -1,5 +1,13 @@
 #include "../includes/IRCServer.hpp"
 
+static bool exitFlag = false;
+
+void    sigintCatcher(int sig)
+{
+    if (sig == SIGINT)
+        exitFlag = true;
+}
+
 IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_port(port),
 	_password(pass),
@@ -17,6 +25,7 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
 
 	FD_ZERO(&_client_fds);
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGINT, sigintCatcher);
 
 	_listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
 	if (_listener < 0)
@@ -66,6 +75,8 @@ void IRCServer::start()
     std::cout << GRE << "Server is started..." << END << std::endl;
 	while (select(_max_fd + 1, &select_fds, NULL, NULL, NULL) != -1)
     {
+        if (exitFlag)
+            _stop();
 		for (int i = 3; i < _max_fd + 1; i++)
         {
 			if (!FD_ISSET(i, &select_fds) || i == _listener)
@@ -103,6 +114,18 @@ void IRCServer::start()
     FD_ZERO(&select_fds );
     FD_ZERO(&_client_fds);
     throw std::invalid_argument(strerror(errno));
+}
+
+void    IRCServer::_stop()
+{
+    std::multimap<std::string, User>::iterator    it;
+
+    for (it = _users.begin(); it != _users.end(); ++it)
+    {
+        User *user = &it->second;
+        _QUIT(Message("", it->second), &user);
+    }
+    FD_ZERO(&_client_fds);
 }
 
 bool    IRCServer::_recv( int sockfd, std::string &buf )
