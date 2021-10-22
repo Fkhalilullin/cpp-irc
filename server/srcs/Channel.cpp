@@ -15,7 +15,7 @@ void Channel::addUser(User &new_user) {
 		return;
 	}
 
-	this->_users.insert(std::make_pair(new_user._nickname, &new_user));
+	this->_users.insert(std::make_pair(new_user.getNickname(), &new_user));
 }
 
 void Channel::addChop(User &new_chop) {

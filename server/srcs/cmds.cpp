@@ -484,7 +484,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			}
 
 			// if no nickname
-			if (usr._nickname == "")
+			if (usr.getNickname() == "")
 				return;
 
 			Channel new_ch(tmp_group);

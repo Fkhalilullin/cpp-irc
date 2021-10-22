@@ -5,25 +5,23 @@
 
 class User {
 
-	public: // private
-
+	public:
 		User();
 		User( const User &rhs );
 		~User();
 
-
-		//private:
+	private:
 		std::string _nickname;
-		std::string _username; // the same
+		std::string _username;
 		std::string _realName;
-		std::string _serverName; // the same
+		std::string _serverName;
+		std::string _buffer;
+		std::string _sendBuffer;
 		bool		_password;
 		bool		_nick;
 		bool		_user;
-		bool		_logged; // orig nick
+		bool		_logged;
 		int			_socket;
-		std::string _buffer;
-		std::string _sendBuffer;
 
 	public:
 		void	setNickname(const std::string &nick);
@@ -42,12 +40,11 @@ class User {
 		bool	isUser      () const;
 		const std::string getNickname() const;
 
-		void				clearBuffer		(						);
+		void				clearBuffer		();
 		void				appendBuffer	(const std::string &data);
-		const std::string	&getBuffer		(						) const;
+		const std::string	&getBuffer		() const;
 		void				setSendBuffer	(const std::string &data);
-		const std::string	&getSendBuffer	(						) const;
+		const std::string	&getSendBuffer	() const;
 };
-
 
 #endif
