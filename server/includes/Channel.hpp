@@ -16,7 +16,7 @@ class Channel {
 		std::string				_pass;
 		userMap					_users;
 		std::vector<User>		_chops;
-		int						_limit_users;
+		size_t					_limit_users;
 
 	private:
 		Channel();

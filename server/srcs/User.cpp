@@ -1,10 +1,10 @@
 #include "../includes/User.hpp"
 
 User::User() : _password(false),
-               _logged  (false),
-               _socket  (-1   ),
                _nick    (false),
-               _user    (false)
+               _user    (false),
+               _logged  (false),
+			   _socket  (-1   )
 {}
 
 User::User( const User &rhs ) : _nickname  (rhs._nickname  ),
@@ -12,10 +12,10 @@ User::User( const User &rhs ) : _nickname  (rhs._nickname  ),
                                 _realName  (rhs._realName  ),
                                 _serverName(rhs._serverName),
                                 _password  (rhs._password  ),
-                                _logged    (rhs._logged    ),
-                                _socket    (rhs._socket    ),
                                 _nick      (rhs._nick      ),
-                                _user      (rhs._user      )
+                                _user      (rhs._user      ),
+                                _logged    (rhs._logged    ),
+                                _socket    (rhs._socket    )
 {}
 
 User::~User() {}

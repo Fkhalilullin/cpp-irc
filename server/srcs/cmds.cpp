@@ -26,8 +26,8 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
         return ;
     }
 
-    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
-        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+    for (size_t i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (size_t j = 0; j != msg.getParamets().size() - 1; ++j) {
             if (i != j && msg.getParamets()[i] == msg.getParamets()[j]) {
                 buf = ":" + this->_hostname
                           + " 407 "
@@ -44,7 +44,7 @@ void IRCServer::_PRIVMSG(const Message &msg, const User &usr) {
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+    for (size_t i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
 	    if (us_it != this->_users.end()) {
@@ -298,7 +298,7 @@ void    IRCServer::_PING( const Message &msg, const User &user )
     _send(user.getSocket(), buf);
 }
 
-void IRCServer::_NOTICE(const Message &msg, const User &usr) {
+void IRCServer::_NOTICE(const Message &msg) {
 	std::multimap<std::string, User>::iterator us_it;
     std::map<std::string, Channel>::iterator ch_it;
     std::string buf;
@@ -314,8 +314,8 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
         return ;
     }
 
-    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
-        for (int j = 0; j != msg.getParamets().size() - 1; ++j) {
+    for (size_t i = 0; i != msg.getParamets().size() - 1; ++i) {
+        for (size_t j = 0; j != msg.getParamets().size() - 1; ++j) {
             if (i != j && msg.getParamets()[i] == msg.getParamets()[j])
                 return ;
         }
@@ -323,7 +323,7 @@ void IRCServer::_NOTICE(const Message &msg, const User &usr) {
 
 	us_it = this->_users.begin();
     ch_it = this->_channels.begin();
-    for (int i = 0; i != msg.getParamets().size() - 1; ++i) {
+    for (size_t i = 0; i != msg.getParamets().size() - 1; ++i) {
 	    us_it = this->_users.find(msg.getParamets()[i]);
         ch_it = this->_channels.find(msg.getParamets()[i]);
 	    if (us_it != this->_users.end()) {
@@ -377,11 +377,11 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 	std::vector<std::string> params;
 	std::vector<std::string> passwords;
-	for (int i = 0; i < msg.getParamets().size(); i++) {
+	for (size_t i = 0; i < msg.getParamets().size(); i++) {
 
         // check valid name of a group
 		std::string tmp_param = msg.getParamets()[i];
-		for (int k = 0; k < tmp_param.size(); k++) {
+		for (size_t k = 0; k < tmp_param.size(); k++) {
 			if (tmp_param[k] == ' ' ||
 				tmp_param[k] == ',' ||
 				tmp_param[k] == '\a' ||
@@ -407,7 +407,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 		return;
 	}
 
-	for (int i = 0; i < params.size(); i++) {
+	for (size_t i = 0; i < params.size(); i++) {
 
 		std::string tmp_group = params[i];
 		std::map<std::string, Channel>::iterator ch_it;
@@ -506,7 +506,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 	}
 	std::string namesMsg;
 	namesMsg = "NAMES ";
-	for (int i = 0; i < params.size(); i++)
+	for (size_t i = 0; i < params.size(); i++)
 		namesMsg += params[i] + ",";
 
 	namesMsg.erase(namesMsg.size() - 1);
@@ -531,7 +531,7 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	std::string tmp_param;
 
 	// if params doesnt have # / & -> return
-	for (int i = 0; i < msg.getParamets().size(); i++) {
+	for (size_t i = 0; i < msg.getParamets().size(); i++) {
 		if (msg.getParamets()[i][0] != '#' && msg.getParamets()[i][0] != '&') {
 			to_send = "400 " + usr.getNickname() + " PART " + ":Could not process invalid parameters";
 			std::cout << usr.getNickname() + " PART " + ":Could not process invalid parameters" << std::endl;
@@ -543,7 +543,7 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 		}
 	}
 
-	for (int i = 0; i < params.size(); i++) {
+	for (size_t i = 0; i < params.size(); i++) {
 
 		std::map<std::string, Channel>::iterator ch_it;
 		ch_it = this->_channels.find(params[i]);
@@ -750,7 +750,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
         return ;
 	// if (_channels.empty())
 	// 	return ;
-    for (int i = 0; i < msg.getParamets().size(); ++i) {
+    for (size_t i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
         if (!(!buf_string.empty() && buf_string[i][0] == '#'))
             buf_string.pop_back();
@@ -758,7 +758,7 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 
 	ch_it = _channels.begin();
 	if (! buf_string.empty()) {
-		for (int i = 0; i <  buf_string.size(); ++i) {
+		for (size_t i = 0; i <  buf_string.size(); ++i) {
 			ch_it = this->_channels.find( buf_string[i]);
 			if (ch_it != _channels.end()) {
 				std::map<std::string, User*>::const_iterator    ch_us_it;

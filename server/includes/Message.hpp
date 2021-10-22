@@ -32,7 +32,7 @@ class Message {
 
 
 		void							_parse ( std::string str, const User& );
-		void							_parseUtility ( std::vector<std::string>, const User& );
+		void							_parseUtility ( std::vector<std::string> );
 		std::vector<std::string>		_split ( const std::string &str, char delimeter );
 
 		bool							_checkColon ( const std::string &str );

@@ -89,7 +89,7 @@ class IRCServer
 
 		void    _PING   ( const Message &msg, const User &user );
         void    _OPER   ( const Message &msg, const User &user );
-		void    _NOTICE (const Message &msg, const User &usr);
+		void    _NOTICE (const Message &msg);
 		void    _JOIN   (const Message &msg, User &usr);
 		void    _PART   (const Message &msg, const User &usr);
 		void    _OPER   (const Message &msg);

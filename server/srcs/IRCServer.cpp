@@ -135,7 +135,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf )
             throw std::exception();
 
         bytesLeft = std::string(c_buf).find(_delimeter);
-        if (bytesLeft == std::string::npos)
+        if (bytesLeft == -1)
             bytesLeft = bytes;
         else
             bytesLeft += _delimeter.length();
@@ -159,7 +159,7 @@ bool    IRCServer::_recv( int sockfd, std::string &buf )
             buf       += c_buf;
         }
     }
-    if (buf.find(_delimeter) == -1)
+    if (buf.find(_delimeter) == std::string::npos)
         res = false;
     else
         res = true;
