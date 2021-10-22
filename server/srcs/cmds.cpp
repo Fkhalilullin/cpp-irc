@@ -530,7 +530,6 @@ void IRCServer::_PART(const Message &msg, const User &usr) {
 	std::vector<std::string> params;
 	std::string tmp_param;
 
-	// if params doesnt have # / & -> return
 	for (size_t i = 0; i < msg.getParamets().size(); i++) {
 		if (msg.getParamets()[i][0] != '#' && msg.getParamets()[i][0] != '&') {
 			to_send = "400 " + usr.getNickname() + " PART " + ":Could not process invalid parameters";
@@ -748,11 +747,10 @@ void IRCServer::_NAMES(const Message &msg, const User &user) {
 
     if (utils::toUpper(msg.getCommand()) != "NAMES")
         return ;
-	// if (_channels.empty())
-	// 	return ;
+
     for (size_t i = 0; i < msg.getParamets().size(); ++i) {
         buf_string.push_back(msg.getParamets()[i]);
-        if (!(!buf_string.empty() && buf_string[i][0] == '#'))
+        if (!(!buf_string.empty() && (buf_string[i][0] == '#' || buf_string[i][0] == '&')))
             buf_string.pop_back();
     }
 
@@ -819,15 +817,8 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
     }
 
     buf_string = msg.getParamets()[1];
-    if (buf_string[0] == '#') {
-        // buf_string.erase(0,1);
-    }
-    else {
+    if (buf_string[0] != '#' && buf_string[0] != '&' ) 
         return ;
-    }
-
-    // if (_channels.empty())
-    //     return ;
 
     us_it = this->_users.find(msg.getParamets()[0]);
     if (us_it == this->_users.end() || _channels.empty()) {
@@ -842,7 +833,6 @@ void IRCServer::_INVITE(const Message &msg, const User &user) {
     }
 
     ch_it = this->_channels.begin();
-    // ch_it = ch_it->second.getUsers().find(msg.getParamets()[0])
 
     us_ch_it = ch_it->second.getUsers().find(user.getNickname());
     if (us_ch_it != ch_it->second.getUsers().end()) {

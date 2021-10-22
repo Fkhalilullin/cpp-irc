@@ -34,11 +34,12 @@ private:
     std::string     _buffer;
 
 public:
-    Client( const char* hostname, const char* port, const char* nick );
+    Client( const char* hostname, const char* port);
     void    run  ();
 private:
     bool    _recv(       std::string &buf ) const;
     bool    _send( const std::string &buf ) const;
+    void    _printMsg ( const std::string &cmd_str );
 };
 
 #endif /* CLIENT_HPP */

@@ -3,14 +3,14 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4)
+    if (argc != 3)
     {
         std::cerr << "Invalid number of arguments" << std::endl;
         return (1);
     }
     try
     {
-        Client c(argv[1], argv[2], argv[3]);
+        Client c(argv[1], argv[2]);
         c.run();
     }
     catch (const std::exception& e)

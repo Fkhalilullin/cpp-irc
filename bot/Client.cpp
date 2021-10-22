@@ -3,7 +3,6 @@
 #include "../server/includes/Message.hpp"
 #include "../server/includes/utils.hpp"
 #include <fstream>
-// #include "../server/includes/IRCServer.hpp"
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -12,10 +11,10 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-Client::Client( const char* hostname, const char* port, const char* nick )
+Client::Client( const char* hostname, const char* port)
     : _hostname (hostname),
       _port     (port    ),
-      _nick     (nick    ),
+      _nick     ("bot"    ),
       _delimeter("\r\n"  )
 {
     int rv;
@@ -125,23 +124,7 @@ void    Client::run()
                     for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    std::ifstream fin;
-
-                    fin.open("gus.txt");
-                    if (!fin.is_open())
-                        continue ;
-                    std::string str;
-                    std::string buf;
-                    while (1) {
-                        buf = cmd_str;
-                        std::getline(fin, str);
-                        buf += str;
-                        _send(buf);
-                        usleep(10000);
-                        buf.clear();
-                        if (fin.eof())
-                            break;
-                    }
+                    _printMsg(cmd_str);
                 }
                 else if (msg.getParamets().back().find("Putin") != -1 ||
                          msg.getParamets().back().find("putin") != -1 ||
@@ -150,48 +133,16 @@ void    Client::run()
                             for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                         cmd_str += ":";
-                        std::ifstream fin;
-
-                        fin.open("putin.txt");
-                        if (!fin.is_open())
-                            continue ;
-                        std::string str;
-                        std::string buf;
-                        while (1) {
-                            buf = cmd_str;
-                            std::getline(fin, str);
-                            buf += str;
-                            _send(buf);
-                            usleep(10000);
-                            buf.clear();
-                            if (fin.eof())
-                                break;
-                        }
+                        _printMsg(cmd_str);
                 }
-                else if (msg.getParamets().back().find("Hydra") != -1 ||
-                         msg.getParamets().back().find("hydra") != -1 ||
-                         msg.getParamets().back().find("Гидра")  != -1||
-                         msg.getParamets().back().find("гидра") != -1) {
+                else if (msg.getParamets().back().find("Shrek") != -1 ||
+                         msg.getParamets().back().find("shrek") != -1 ||
+                         msg.getParamets().back().find("Шрек")  != -1||
+                         msg.getParamets().back().find("шрек") != -1) {
                              for (int i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                         cmd_str += ":";
-                        std::ifstream fin;
-
-                        fin.open("hydra.txt");
-                        if (!fin.is_open())
-                            continue ;
-                        std::string str;
-                        std::string buf;
-                        while (1) {
-                            buf = cmd_str;
-                            std::getline(fin, str);
-                            buf += str;
-                            _send(buf);
-                            usleep(10000);
-                            buf.clear();
-                            if (fin.eof())
-                                break;
-                        }
+                        _printMsg(cmd_str);
                 }
             }
             else
@@ -284,4 +235,25 @@ bool	Client::_send( const std::string &buf ) const
         bytesLeft -= bytes;
     }
     return (bytes == -1 ? false : true);
+}
+
+void Client::_printMsg(const std::string &cmd_str) {
+    std::ifstream fin;
+    std::string str;
+    std::string buf;
+
+    fin.open("shrek.txt");
+    if (!fin.is_open())
+        return ;
+    while (1) {
+        buf = cmd_str;
+        std::getline(fin, str);
+        buf += str;
+        _send(buf);
+        usleep(10000);
+        buf.clear();
+        if (fin.eof())
+            break;
+    }
+    fin.close();
 }
