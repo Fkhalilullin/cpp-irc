@@ -15,32 +15,8 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
 	_serverAdress.sin_addr.s_addr = INADDR_ANY;
 	_serverAdress.sin_port = htons(this->_port);
 
-		// zanulentie fd set
-
+	FD_ZERO(&_client_fds);
     signal(SIGPIPE, SIG_IGN);
-}
-
-IRCServer::~IRCServer() {}
-
-void IRCServer::_accept()
-{
-    struct sockaddr_in temp;
-
-    socklen_t socklen = sizeof(struct sockaddr_in); // temp
-    int new_fd = accept(_listener, (struct sockaddr*)&temp, &socklen); // reinpretet cast ? // eto new client socket
-    if (new_fd == -1)
-        throw std::invalid_argument(strerror(errno));
-    fcntl(_listener, F_SETFL, O_NONBLOCK);
-    _addUser(new_fd);
-    if (_max_fd < new_fd)
-        _max_fd = new_fd;
-    FD_SET(new_fd, &_client_fds);
-    std::cout << GRE << "New connetion on socket : " << new_fd << END << std::endl;
-}
-
-void IRCServer::start()
-{
-    std::multimap<std::string, User>::iterator  uit;
 
 	_listener = socket(AF_INET, SOCK_STREAM, getprotobyname("TCP")->p_proto);
 	if (_listener < 0)
@@ -60,7 +36,31 @@ void IRCServer::start()
 
 	FD_SET(_listener, &_client_fds);
 	_max_fd = _listener;
-	fd_set  select_fds; // just for copy
+}
+
+IRCServer::~IRCServer() {}
+
+void IRCServer::_accept()
+{
+    struct sockaddr_in temp;
+
+    socklen_t socklen = sizeof(struct sockaddr_in);
+    int new_fd = accept(_listener, (struct sockaddr*)&temp, &socklen);
+    if (new_fd == -1)
+        throw std::invalid_argument(strerror(errno));
+    fcntl(_listener, F_SETFL, O_NONBLOCK);
+    _addUser(new_fd);
+    if (_max_fd < new_fd)
+        _max_fd = new_fd;
+    FD_SET(new_fd, &_client_fds);
+    std::cout << GRE << "New connetion on socket : " << new_fd << END << std::endl;
+}
+
+void IRCServer::start()
+{
+	std::multimap<std::string, User>::iterator  uit;
+
+	fd_set  select_fds;
 	select_fds = _client_fds;
 
     std::cout << GRE << "Server is started..." << END << std::endl;
@@ -77,24 +77,14 @@ void IRCServer::start()
             if (!user->getSendBuffer().empty())
                 _send(i, user->getSendBuffer());
 
-            // receiving data
             try
             {
-                if ( _recv(i, buf) )
-                {
-
-                }
-                else
-                {
-
-                    continue ;
-                }
+                _recv(i, buf);
             }
             catch (const std::exception& e)
             {
                 _QUIT(Message(std::string("QUIT :Remote host closed the connection"), *user), &user);
             }
-            // command execution
             _execute(i, buf);
 
             std::cout << "Number of users :\t "
@@ -180,7 +170,6 @@ bool    IRCServer::_recv( int sockfd, std::string &buf )
     std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
     std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
     std::cout << GRE << "socket  : " << END << sockfd << std::endl;
-    // std::cout << GRE << "msg len : " << END << buf.length() << std::endl;
     std::cout << GRE << "msg     : " << END << buf << std::endl;
     std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     return (res);
@@ -199,7 +188,6 @@ bool	IRCServer::_send( int sockfd, const std::string &buf )
     std::cout << YEL << "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" << END << std::endl;
     std::cout << YEL << "------------SENDED------------" << END << std::endl;
     std::cout << YEL << "socket  : " << END << sockfd << std::endl;
-    // std::cout << YEL << "msg len : " << END << buf_delim.length() << std::endl;
     std::cout << YEL << "msg     : " << END << buf << std::endl;
     std::cout << YEL << "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲" << END << std::endl;
     if (buf_delim.find(_delimeter) != buf_delim.length() - _delimeter.length())
@@ -282,13 +270,11 @@ void    IRCServer::_sendToJoinedChannels( const std::string &nick, const std::st
     std::map<std::string, User*>  ::const_iterator  uit;
     std::vector<std::string>      ::const_iterator  vit;
 
-
     // passing through all channels
     for (chit = _channels.begin(); chit != _channels.end(); ++chit)
     {
         const Channel &channel = chit->second;
 
-        // found a user by nick in the channel ?
         if (channel.getUsers().find(nick) != channel.getUsers().end())
         {
             // passing through all users from channel

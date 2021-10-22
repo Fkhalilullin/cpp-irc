@@ -6,22 +6,17 @@
 #include <vector>
 #include <map>
 
-
 #include "User.hpp"
-#define YEL "\033[33m" // make colors in other H file
-#define END "\033[37m"
-
 
 class Channel {
-	private: // make private
+	private:
 		typedef std::map<std::string, User*> userMap;
-		std::string	_name;
-		std::string	_topic;
-		userMap		_users;
-		// userMap		_chops;
+		std::string				_name;
+		std::string				_topic;
+		std::string				_pass;
+		userMap					_users;
 		std::vector<User>		_chops;
-
-
+		int						_limit_users;
 
 	private:
 		Channel();
@@ -30,45 +25,22 @@ class Channel {
 		Channel(std::string name);
 		~Channel();
 
-		void addUser(User &_user); // ok
-		void addChop(User &_user); // ok
-		bool removeUser(std::string _nickname); // ok
+		void addUser(User &_user);
+		void addChop(User &_user);
 		bool removeChop(std::string nick);
-		// REMOVE USER != BAN USER -> make func ban user
+		bool removeUser(std::string _nickname);
+		void changeTopic(std::string new_topic);
 
-		const std::string	& getName () const;
-		const std::string	& getTopic() const;
-		const userMap		& getUsers() const;
+		const std::string			& getName () const;
+		const std::string			& getTopic() const;
+		const userMap				& getUsers() const;
 		const std::vector<User>		& getChops() const;
-
-		bool				  setName ( std::string name  ); // checking the name for validity
-		void				  setTopic( std::string topic );
-
-
-		// NEW FUNCS //
-		int _limit_users; // ok // make it const
-		std::vector<std::string> _ban_list; // ok
-
-		void channel_info(); //ok
-		void change_topic(std::string new_topic); // ok // gde budet funk?
-		// void change name of channel (channel, new_channel name) // na servere?
-
-		// channel mode // ?? private ili net?? // dobavit' modi
-
-		// add to server remove channel
-		// add to user -> get username // -
-
-		// ПРОВЕРКА ИМеНИ КАНАЛА С СУЩЕСТВУЮЩИМИ ЮЗЕРАМИ
-
-		std::string _pass;
-		// make set_pass
-
-
+		const std::string			& getPass () const;
 		std::vector<User>::const_iterator const getChop(std::string const &nick) const;
 
-
-
-
+		bool				  setName ( std::string name  );
+		void				  setTopic( std::string topic );
+		void				  setPass ( std::string pass  );
 };
 
 #endif

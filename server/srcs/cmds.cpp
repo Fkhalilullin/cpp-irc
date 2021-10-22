@@ -427,7 +427,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			try {
 				passwords.at(i);
 				// invalid pass
-				if (!(ch_it->second._pass == passwords[i])) {
+				if (!(ch_it->second.getPass() == passwords[i])) {
 
 					to_send = "475 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)";
 					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)" << std::endl;
@@ -436,7 +436,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 				}
 			}
 			catch( ... ) {
-				if (!ch_it->second._pass.empty()) {
+				if (!ch_it->second.getPass().empty()) {
 					to_send = "475 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)";
 					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+k)" << std::endl;
 					_send(usr.getSocket(), to_send);
@@ -450,21 +450,6 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 			if (user_search_it != ch_it->second.getUsers().end()) {
 				// user already in this group;
 				return;
-			}
-
-
-			// check mode of channnel MODE
-
-			// TEST Ban list
-
-			// checking if user doesnt banned on channel
-			for (int i = 0; i < ch_it->second._ban_list.size(); i++) {
-				if (ch_it->second._ban_list[i] == usr.getNickname()) {
-					to_send = "474 " + usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+b)";
-					std::cout << usr.getNickname() + " " + ch_it->first + " " + ":Cannot join channel (+b)" << std::endl;
-					_send(usr.getSocket(), to_send);
-					return;
-				}
 			}
 
 			// if more than 10 groups
@@ -529,7 +514,7 @@ void IRCServer::_JOIN(const Message &msg, User &usr) {
 
 			try {
 				passwords.at(i);
-				new_ch._pass = passwords[i];
+				new_ch.setPass(passwords[i]);
 			}
 			catch ( ... ) {}
 
