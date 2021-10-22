@@ -125,7 +125,7 @@ void Client::run()
                     msg.getParamets().back().find("Гуся") != std::string::npos ||
                     msg.getParamets().back().find("Работяги") != std::string::npos)
                 {
-                    for (int i = 0; i < msg.getParamets().size() - 1; ++i)
+                    for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
                     fin.open("gus.txt");
@@ -136,7 +136,7 @@ void Client::run()
                          msg.getParamets().back().find("Путин") != std::string::npos ||
                          msg.getParamets().back().find("путин") != std::string::npos)
                 {
-                    for (int i = 0; i < msg.getParamets().size() - 1; ++i)
+                    for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
                     fin.open("putin.txt");
@@ -147,7 +147,7 @@ void Client::run()
                          msg.getParamets().back().find("Шрек") != std::string::npos  ||
                          msg.getParamets().back().find("шрек") != std::string::npos)
                 {
-                    for (int i = 0; i < msg.getParamets().size() - 1; ++i)
+                    for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
                     fin.open("shrek.txt");
@@ -162,10 +162,10 @@ void Client::run()
 
 bool Client::_recv(std::string &buf) const
 {
-    char c_buf[512];
-    int bytesLeft;
-    int bytes = 1;
-    int res;
+    char    c_buf[512];
+    size_t  bytesLeft;
+    int     bytes = 1;
+    bool    res;
 
     buf.clear();
     while (buf.find(_delimeter) == std::string::npos && buf.length() < sizeof(c_buf))
@@ -210,13 +210,13 @@ bool Client::_recv(std::string &buf) const
             buf += c_buf;
         }
     }
-    if (buf.find(_delimeter) == -1)
+    if (buf.find(_delimeter) == std::string::npos)
         res = false;
     else
         res = true;
     buf.erase(buf.end() - _delimeter.length(), buf.end());
     std::cout << GRE << "💌 \"" << buf << "\"" << END << std::endl;
-    if (buf.find("PING") != -1)
+    if (buf.find("PING") != std::string::npos)
         _send(std::string(":") + _nick + std::string(" PONG ") + _nick);
     return (res);
 }

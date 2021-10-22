@@ -1,7 +1,7 @@
 NAME		= bot
 OBJS_DIR	= ./objs/
 CXX			= clang++
-CXX_FLAGS	= -MMD #-Wall -Wextra -Werror -fsanitize=address
+CXX_FLAGS	= -g -Wall -Wextra -Werror
 
 SRCS		= main.cpp	 \
 			  Client.cpp \
@@ -12,12 +12,12 @@ SRCS		= main.cpp	 \
 OBJS		= $(notdir $(SRCS:.cpp=.o))
 OBJS_PATH	= $(addprefix $(OBJS_DIR), $(OBJS))
 
-$(OBJS_DIR)%.o : %.cpp Client.hpp ../server/includes/User.hpp 
+$(OBJS_DIR)%.o : %.cpp Client.hpp ../server/includes/User.hpp
 	@mkdir -p $(OBJS_DIR)
 	@echo "\033[1;31m- Done :\033[0m $<"
 	@$(CXX) $(CXX_FLAGS) -c $< -o $@
 
-$(OBJS_DIR)%.o : ../server/srcs/%.cpp Client.hpp ../server/includes/User.hpp 
+$(OBJS_DIR)%.o : ../server/srcs/%.cpp Client.hpp ../server/includes/User.hpp
 	@mkdir -p $(OBJS_DIR)
 	@echo "\033[1;31m- Done :\033[0m $<"
 	@$(CXX) $(CXX_FLAGS) -c $< -o $@
