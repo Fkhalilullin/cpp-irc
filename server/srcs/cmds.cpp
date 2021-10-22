@@ -426,9 +426,9 @@ void IRCServer::_JOIN(const Message &msg, User &usr)
             to_send = ":" + usr.getNickname() + " JOIN :" + ch_it->second.getName();
 
             this->_sendToChannel(ch_it->second.getName(), to_send);
-            Message namesMsg(msg);
-            namesMsg.setCommand("NAMES");
-            this->_NAMES(namesMsg, usr);
+            // Message namesMsg(msg);
+            // namesMsg.setCommand("NAMES");
+            // this->_NAMES(namesMsg, usr);
         }
         else
         {

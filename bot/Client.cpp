@@ -118,7 +118,7 @@ void Client::run()
                     for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    fin.open("gus.txt");
+                    fin.open("utils/gus.txt");
                     _printMsg(cmd_str, fin);
                 }
                 else if (msg.getParamets().back().find("Putin") != std::string::npos ||
@@ -129,7 +129,7 @@ void Client::run()
                     for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    fin.open("putin.txt");
+                    fin.open("utils/putin.txt");
                     _printMsg(cmd_str, fin);
                 }
                 else if (msg.getParamets().back().find("Shrek") != std::string::npos ||
@@ -140,7 +140,7 @@ void Client::run()
                     for (size_t i = 0; i < msg.getParamets().size() - 1; ++i)
                         cmd_str += msg.getParamets()[i] + " ";
                     cmd_str += ":";
-                    fin.open("shrek.txt");
+                    fin.open("utils/shrek.txt");
                     _printMsg(cmd_str, fin);
                 }
             }

@@ -1,4 +1,4 @@
-NAME		=	irc
+NAME		=	ircserv
 CXX			=	clang++
 CXX_FLAGS	=	-g -std=c++98 -MMD -fsanitize=address -Wall -Wextra -Werror
 OBJS_DIR	=	./objs/
