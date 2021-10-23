@@ -11,11 +11,12 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-Client::Client(const char *hostname, const char *port)
+Client::Client(const char *hostname, const char *port, const char* pass)
     : _hostname(hostname),
       _port(port),
       _nick("bot"),
-      _delimeter("\r\n")
+      _delimeter("\r\n"),
+      _pass(pass)
 {
     int rv;
 
@@ -63,7 +64,7 @@ void Client::run()
 {
     std::string buf;
 
-    buf = "PASS 1234" + std::string("\r\n")
+    buf = "PASS " + _pass + std::string("\r\n")
 
           + "USER myusernaaame * * *" + std::string("\r\n") + "NICK " + std::string(_nick) + std::string("\r\n");
     _send(buf);
@@ -211,10 +212,6 @@ bool Client::_recv(std::string &buf)
     std::cout << GRE << "💌 \"" << buf << "\"" << END << std::endl;
     if (buf.find("PING") != std::string::npos)
         _send(std::string(":") + _nick + std::string(" PONG ") + _nick);
-    std::cout << GRE << "▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽" << END << std::endl;
-    std::cout << GRE << "-----------RECIEVED-----------" << END << std::endl;
-    std::cout << GRE << "msg     : " << END << buf << std::endl;
-    std::cout << GRE << "△△△△△△△△△△△△△△△△△△△△△△△△△△△△△△" << END << std::endl;
     return (res);
 }
 

@@ -192,9 +192,9 @@ void IRCServer::_NICK(const Message &msg, User **user)
     {
         (*user)->unableLogged();
         buf = "001 " + (*user)->getNickname() + " :Welcome to the Internet Relay Network, " + (*user)->getNickname() + "\r\n";
-        buf += "002 " + (*user)->getNickname() + " :Your host is <servername>, running version <version>" + "\r\n";
+        buf += "002 " + (*user)->getNickname() + " :Your host is " + _hostname + ", running version <version>" + "\r\n";
         buf += "003 " + (*user)->getNickname() + " :This server was created <datetime>" + "\r\n";
-        buf += "004 " + (*user)->getNickname() + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz" + "\r\n";
+        buf += "004 " + (*user)->getNickname() + " " + _hostname + " 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz" + "\r\n";
         buf += "005 " + (*user)->getNickname() + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 \
                 NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 \
                 CHANMODES=beI,k,l,acimnpqrstz :are supported by this server";
@@ -225,9 +225,9 @@ void IRCServer::_USER(const Message &msg, User &user)
     {
         user.unableLogged();
         buf = "001 " + user.getNickname() + " :Welcome to the Internet Relay Network, " + user.getNickname() + "\r\n";
-        buf += "002 " + user.getNickname() + " :Your host is <servername>, running version <version>" + "\r\n";
+        buf += "002 " + user.getNickname() + " :Your host is " + _hostname + ", running version <version>" + "\r\n";
         buf += "003 " + user.getNickname() + " :This server was created <datetime>" + "\r\n";
-        buf += "004 " + user.getNickname() + " <servername> 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz" + "\r\n";
+        buf += "004 " + user.getNickname() + " " + _hostname + " 1.0/UTF-8 aboOirswx abcehiIklmnoOpqrstvz" + "\r\n";
         buf += "005 " + user.getNickname() + " PREFIX=(ohv)@\%+ CODEPAGES MODES=3 CHANTYPES=#&!+ MAXCHANNELS=20 \
                 NICKLEN=31 TOPICLEN=255 KICKLEN=255 NETWORK=school21 \
                 CHANMODES=beI,k,l,acimnpqrstz :are supported by this server";

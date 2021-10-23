@@ -16,8 +16,8 @@ IRCServer::IRCServer(unsigned int port, std::string pass) :
     char hostname[30];
 
     memset(hostname, 0, sizeof(hostname));
-    gethostbyname(hostname);
-    _hostname = hostname;
+    if (gethostname(hostname, sizeof(hostname)) != -1)
+        _hostname = hostname;
 
     _serverAdress.sin_family = AF_INET;
     _serverAdress.sin_addr.s_addr = INADDR_ANY;

@@ -31,12 +31,13 @@ private:
     struct addrinfo hints, *servinfo, *p;
     char            s[INET6_ADDRSTRLEN];
     std::string     _delimeter;
+    std::string     _pass;
     std::string     _buffer;
     std::string     _recvBuffer;
     std::string     _sendBuffer;
 
 public:
-    Client( const char* hostname, const char* port);
+    Client( const char* hostname, const char* port, const char* pass);
     void    run  ();
 private:
     bool    _recv(       std::string &buf );
