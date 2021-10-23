@@ -1,6 +1,6 @@
 NAME		=	ircserv
 CXX			=	clang++
-CXX_FLAGS	=	-g -std=c++98 -MMD -fsanitize=address -Wall -Wextra -Werror
+CXX_FLAGS	=	-g -std=c++98 -MMD -Wall -Wextra -Werror
 OBJS_DIR	=	./objs/
 SERVER_DIR	=	./server/srcs/
 CLIENT_DIR	=	./client/

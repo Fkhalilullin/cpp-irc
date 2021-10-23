@@ -253,17 +253,14 @@ void IRCServer::_NOTICE(const Message &msg)
 
     if (utils::toUpper(msg.getCommand()) != "NOTICE")
         return;
-
     if (msg.getParamets().empty())
     {
         return;
     }
-
     if (msg.getParamets().size() == 1)
     {
         return;
     }
-
     for (size_t i = 0; i != msg.getParamets().size() - 1; ++i)
     {
         for (size_t j = 0; j != msg.getParamets().size() - 1; ++j)
@@ -272,7 +269,6 @@ void IRCServer::_NOTICE(const Message &msg)
                 return;
         }
     }
-
     us_it = this->_users.begin();
     ch_it = this->_channels.begin();
     for (size_t i = 0; i != msg.getParamets().size() - 1; ++i)
@@ -288,13 +284,8 @@ void IRCServer::_NOTICE(const Message &msg)
         else if (ch_it != this->_channels.end())
         {
             std::string message(":" + msg.getPrefix() + " PRIVMSG " + ch_it->second.getName() + " :" + msg.getParamets().back());
-            std::map<std::string, User *>::const_iterator us_ch_it;
 
-            us_ch_it = ch_it->second.getUsers().begin();
-            for (; us_ch_it != ch_it->second.getUsers().end(); ++us_ch_it)
-            {
-                _send(us_ch_it->second->getSocket(), message);
-            }
+			_sendToChannel(ch_it->first, message, msg.getPrefix());
         }
         else
             return;

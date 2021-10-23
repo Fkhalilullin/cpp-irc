@@ -374,6 +374,7 @@ void IRCServer::_execute(int sockfd, const std::string &buf)
     if (user->isPassworded() && user->isLogged())
     {
         _PRIVMSG(msg, *user);
+		_NOTICE(msg);
         _JOIN(msg, *user);
         _PART(msg, *user);
         _LIST(msg, *user);
