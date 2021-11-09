@@ -1,4 +1,4 @@
-## cpp_irc
+## ft_irc
 
 team project of 42 school where it is necessary to implement own simple IRC server, based on the [RFC 1459](https://datatracker.ietf.org/doc/html/rfc1459) standard. the project was made by [ngamora](https://github.com/zagaynov-andrew), [mteressa](https://github.com/Fkhalilullin) and [constbar](https://github.com/constbar).
 
@@ -11,12 +11,20 @@ the server does not support server-to-server communication.
 **to launch the server:**
 ```
 make
+./ircserv <port> <password>
+```
+example:
+```
 ./ircserv 6667 1234
 ```
 **to launch the client:**
 ```
 cd client && make
-./client 127.0.0.1 6667 <nickname>
+./client <ip> <port> <nickname>
+```
+example:
+```
+./client 127.0.0.1 6667 jack_sparrow
 ```
 ![](client.gif)
 
