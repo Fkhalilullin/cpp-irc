@@ -1,4 +1,4 @@
-## ft_irc
+## cpp_irc
 
 team project of 42 school where it is necessary to implement own simple IRC server, based on the [RFC 1459](https://datatracker.ietf.org/doc/html/rfc1459) standard. the project was made by [ngamora](https://github.com/zagaynov-andrew), [mteressa](https://github.com/Fkhalilullin) and [constbar](https://github.com/constbar).
 
